@@ -8,7 +8,7 @@ const postRoutes = require("./src/routes/postRoutes");
 const imagekitRoutes = require("./src/routes/imagekitRoutes");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 //Medale Wear
 app.use(cors());
 app.use(express.json());
