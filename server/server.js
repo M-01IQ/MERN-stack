@@ -11,11 +11,11 @@ const imagekitRoutes = require("./src/routes/imagekitRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-const frontend = process.env.frontend || "http://localhost:5173";
+const frontend = process.env.frontend;
 
 // 1. إعداد الـ CORS لـ Express أولاً
 app.use(cors({
-  origin: frontend,
+  origin:frontend,
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"]
 }));
@@ -28,7 +28,7 @@ const server = http.createServer(app);
 // 2. إعداد Socket.io مع نفس إعدادات الـ CORS
 const io = new Server(server, {
   cors: {
-    origin: frontend,
+    origin:frontend,
     methods: ["GET", "POST"],
     credentials: true
   },
