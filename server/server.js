@@ -11,30 +11,39 @@ const imagekitRoutes = require("./src/routes/imagekitRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-const frontend = process.env.frontend
-// إنشاء سيرفر HTTP وربطه بـ Express
+const frontend = process.env.frontend || "http://localhost:5173";
+
+// 1. إعداد الـ CORS لـ Express أولاً
+app.use(cors({
+  origin: frontend,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE"]
+}));
+
+app.use(express.json());
+
+// إنشاء سيرفر HTTP
 const server = http.createServer(app);
 
-// إعداد Socket.io مع السماح بـ CORS
+// 2. إعداد Socket.io مع نفس إعدادات الـ CORS
 const io = new Server(server, {
   cors: {
     origin: frontend,
-    methods: ["GET", "POST"]
-  }
+    methods: ["GET", "POST"],
+    credentials: true
+  },
+  allowEIO3: true // لضمان التوافق مع النسخ الأقدم إذا لزم الأمر
 });
 
-// تمرير io إلى الـ Request ليكون متاحاً داخل الـ Routes
+// تمرير io إلى الـ Request
 app.use((req, res, next) => {
   req.io = io;
   next();
 });
 
-app.use(cors());
-app.use(express.json());
-
 connectDB();
 
-app.get("/", (req, res) => { res.send("welcome") });
+app.get("/", (req, res) => { res.send("server is running 🚀") });
 
 app.use("/api", userRoutes);
 app.use("/api", postRoutes);
