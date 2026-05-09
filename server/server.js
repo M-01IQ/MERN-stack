@@ -1,8 +1,8 @@
 require('dotenv').config();
 const express = require("express");
 const cors = require("cors");
-const http = require("http"); // إضافة هذا السطر
-const { Server } = require("socket.io"); // إضافة هذا السطر
+const http = require("http");
+const { Server } = require("socket.io");
 const connectDB = require("./src/config/db");
 
 const userRoutes = require("./src/routes/userRoutes");
@@ -11,14 +11,14 @@ const imagekitRoutes = require("./src/routes/imagekitRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-
+const frontend = process.env.frontend
 // إنشاء سيرفر HTTP وربطه بـ Express
 const server = http.createServer(app);
 
 // إعداد Socket.io مع السماح بـ CORS
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // في الديبلويمينت ضع رابط الفرونت هنا
+    origin: frontend,
     methods: ["GET", "POST"]
   }
 });
