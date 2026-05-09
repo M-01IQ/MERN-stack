@@ -5,7 +5,10 @@ import { useToast } from '../ui/ToastContext';
 import API from "../../api/axiosInstance"; 
 import { FaHeart, FaRegHeart, FaEdit, FaTrashAlt, FaPlus, FaSearch, FaExclamationTriangle, FaRegComment, FaShareAlt } from 'react-icons/fa';
 
-const socket = io(import.meta.env.VITE_API_URL);
+const socket = io(import.meta.env.VITE_API_URL, {
+  transports: ["websocket"], // إجبار المتصفح على استخدام Websocket مباشرة لتجنب أخطاء CORS Polling
+  withCredentials: true      // السماح بتبادل بيانات التحقق والارتباط بين Vercel و Railway
+});
 
 function Posts() {
   const { user } = useContext(AuthContext);
