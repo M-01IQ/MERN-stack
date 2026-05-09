@@ -34,6 +34,7 @@ router.post("/newpost", verifyToken, async (req, res) => {
     });
 
     const savedPost = await newPost.save(); // حفظ المنشور في متغير
+    req.io.emit("newPost",savedPost)
     return res.status(200).json(savedPost); // إرجاع المنشور نفسه بدلاً من رسالة نصية
   } catch (err) {
     console.error(err);

@@ -1,8 +1,11 @@
+import { io } from "socket.io-client";
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from '../ui/ToastContext';
 import API from "../../api/axiosInstance"; 
 import { FaHeart, FaRegHeart, FaEdit, FaTrashAlt, FaPlus, FaSearch, FaExclamationTriangle, FaRegComment, FaShareAlt } from 'react-icons/fa';
+
+const socket = io(import.meta.env.VITE_API_URL);
 
 function Posts() {
   const { user } = useContext(AuthContext);
@@ -44,7 +47,31 @@ function Posts() {
 
   useEffect(() => {
     fetchPosts();
+
+    // الاستماع لإضافة منشور جديد من أي مستخدم
+    socket.on("newPost", (newPostFromServer) => {
+  setPosts((prev) => {
+    // التحقق مما إذا كان المنشور موجوداً مسبقاً في القائمة
+    if (prev.some(post => post._id === newPostFromServer._id)) {
+      return prev;
+    }
+    return [newPostFromServer, ...prev];
+  });
+});
+
+
+    // الاستماع لحذف منشور
+    socket.on("post_deleted", (deletedId) => {
+      setPosts((prev) => prev.filter(post => post._id !== deletedId));
+    });
+
+    // تنظيف الاتصال عند إغلاق المكون
+    return () => {
+      socket.off("newPost");
+      socket.off("post_deleted");
+    };
   }, []);
+
 
   const submitData = async () => {
     const { title, text } = formData;
@@ -84,21 +111,15 @@ function Posts() {
       const postData = { ...formData, avatar: finalAvatarUrl, fileId: imageKitFileId };
       
       if (editId) {
-  const res = await API.put(`/UpdatePost/${editId}`, postData);
-  // تحديث محلي للمنشور المعدل فقط
-  setPosts(posts.map(u => u._id === editId ? res.data : u));
-  showToast("تم التعديل بنجاح", "success");
-} else {
-  const res = await API.post("/newpost", postData);
-  
-  // تحديث محلي: أضف المنشور الجديد الذي رجع من السيرفر إلى القائمة فوراً
-  // هكذا لن تحتاج لاستدعاء fetchPosts() ولن تلاحظ أي إعادة تحميل
-  setPosts(prev => [res.data, ...prev]); 
-  
-  showToast("تم النشر بنجاح", "success");
-}
+        const res = await API.put(`/UpdatePost/${editId}`, postData);
+        setPosts(posts.map(u => u._id === editId ? res.data : u));
+        showToast("تم التعديل بنجاح", "success");
+      } else {
+        const res = await API.post("/newpost", postData);
+        showToast("تم النشر بنجاح", "success");
+      }
 
-resetForm(); // تفريغ الخانات
+      resetForm();
     } catch (err) {
       showToast(err.message || "حدث خطأ ما", "error");
     } finally {
