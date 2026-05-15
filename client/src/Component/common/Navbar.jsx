@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { useConfirm } from "../ui/ConfirmContext";
-import { useToast } from "../ui/ToastContext"; // تأكد من استيراد التوست
+import { useToast } from "../ui/ToastContext";
 import { 
   HiHome, HiOutlineHome, 
   HiUsers, HiOutlineUsers, 
@@ -13,7 +13,6 @@ import {
 } from "react-icons/hi";
 
 const Navbar = () => {
-  // 1. استدعاء كل الـ Hooks في بداية المكون
   const { user, logout } = useContext(AuthContext); 
   const askConfirm = useConfirm();
   const showToast = useToast();
@@ -21,13 +20,12 @@ const Navbar = () => {
 
   const hideOnPages = ["/login", "/register", "/reels"]; 
   
-  // التحقق من وجود المستخدم والمسار
   if (hideOnPages.includes(location.pathname.toLowerCase()) || !user) return null;
 
   const isActive = (path) => location.pathname === path;
   
   const handleConfirmation = () => {
-    // 2. استدعاء نافذة التأكيد
+    // استدعاء نافذة التأكيد
     askConfirm(
       "تسجيل الخروج ؟", 
       "هل أنت متأكد أنك تريد الخروج من الحساب؟", 

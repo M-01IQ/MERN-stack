@@ -1,8 +1,8 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useContext, useEffect } from "react";
 import { AuthContext } from "./context/AuthContext";
 import { ToastProvider } from './Component/ui/ToastContext';
-import { useCookies } from "react-cookie"; // تأكد من استيراد الكوكيز هنا
+import { useCookies } from "react-cookie";
 import './App.css';
 
 import Navbar from './Component/common/Navbar';
@@ -18,7 +18,6 @@ function App() {
   const { user, loading } = useContext(AuthContext);
   const [cookies] = useCookies(["theme"]);
 
-  // مزامنة الثيم من الكوكيز (الحل لمشكلة الريفرش)
   useEffect(() => {
     const savedTheme = cookies.theme || "light";
     document.documentElement.setAttribute("data-theme", savedTheme);
@@ -31,12 +30,7 @@ function App() {
   );
 
   return (
-    <Router>
       <ToastProvider>
-        {/* 
-          المنطق الجديد: 
-          إذا لم يكن هناك مستخدم، نعرض فقط صفحات الدخول بدون Navbar وبدون تنسيقات الموقع الإضافية 
-        */}
         {!user ? (
           <Routes>
             <Route path="/login" element={<Login />} />
@@ -60,7 +54,6 @@ function App() {
           </div>
         )}
       </ToastProvider>
-    </Router>
   );
 }
 

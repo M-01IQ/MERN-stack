@@ -233,7 +233,7 @@ function Posts() {
                     }}>
                       <FaEdit size={18} />
                     </button>
-                    {/* استدعاء دالة التأكيد الجديدة هنا */}
+                    
                     <button className="btn btn-ghost btn-sm btn-circle text-error hover:bg-error/10" onClick={() => handleDeleteClick(post)}>
                       <FaTrashAlt size={18} />
                     </button>
