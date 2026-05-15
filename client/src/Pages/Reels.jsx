@@ -173,37 +173,37 @@ const Reels = () => {
       id: 1,
       videoUrl:
         "https://ackbctzmmrrvckpkdvpj.supabase.co/storage/v1/object/sign/vd/VID_20260404_142517.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV80ODhkMTlmNC0xMWY4LTQ1NWYtYmRmOS0yYjEzNjMyYTAzYTUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2ZC9WSURfMjAyNjA0MDRfMTQyNTE3Lm1wNCIsImlhdCI6MTc3NjM2NTE4MCwiZXhwIjoxODA3OTAxMTgwfQ.1xQJtjbCeQe_K_q2dLL_Pdc--JRQNx3N6f5VVsgn8OU",
-      username: "ali_dev",
+      username: "𝙼𝚄𝚂𝚃𝙰𝙵𝙰",
       description:"لبنان",
       songName: "Relaxing Music - Artist",
       likes: "165",
       comments: "32",
       avatarUrl:
-        "https://ik.imagekit.io/2vom8qfmg/images/IMG_20241026_210806_662.jpg?updatedAt=1775030327058",
+        "https://ik.imagekit.io/2vom8qfmg/images/profile.jpg",
     },
     {
       id: 2,
       videoUrl:
         "https://ackbctzmmrrvckpkdvpj.supabase.co/storage/v1/object/sign/vd/VID_20260404_142540.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV80ODhkMTlmNC0xMWY4LTQ1NWYtYmRmOS0yYjEzNjMyYTAzYTUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2ZC9WSURfMjAyNjA0MDRfMTQyNTQwLm1wNCIsImlhdCI6MTc3NjM2NTQ1NSwiZXhwIjoxODA3OTAxNDU1fQ.FSZadreZthsM3UI3STilkoc-UFNCF5CFvz01NjPPC3g",
-      username: "ali_dev",
+      username: "𝙼𝚄𝚂𝚃𝙰𝙵𝙰",
       description:"الوعد الصادق",
       songName: "Relaxing Music - Artist",
       likes: "78",
       comments: "35",
       avatarUrl:
-        "https://ik.imagekit.io/2vom8qfmg/images/IMG_20241026_210806_662.jpg?updatedAt=1775030327058",
+        "https://ik.imagekit.io/2vom8qfmg/images/profile.jpg",
     },
     {
       id: 3,
       videoUrl:
         "https://ackbctzmmrrvckpkdvpj.supabase.co/storage/v1/object/sign/vd/null(MP4)_1.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV80ODhkMTlmNC0xMWY4LTQ1NWYtYmRmOS0yYjEzNjMyYTAzYTUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2ZC9udWxsKE1QNClfMS5tcDQiLCJpYXQiOjE3NzY4ODM2MTcsImV4cCI6NDU1MjA1MTYxN30.TgrqvR7F_Q5gwGh5ZZ2T1i5grn6u2TkE6rpN9ILRXo0",
-      username: "ali_dev",
+      username: "𝙼𝚄𝚂𝚃𝙰𝙵𝙰",
       description:"🚀",
       songName: "Relaxing Music - Artist",
       likes: "47",
       comments: "5",
       avatarUrl:
-        "https://ik.imagekit.io/2vom8qfmg/images/IMG_20241026_210806_662.jpg?updatedAt=1775030327058",
+        "https://ik.imagekit.io/2vom8qfmg/images/profile.jpg",
     },
   ];
 

@@ -1,14 +1,13 @@
 import { createContext, useState, useEffect } from "react";
 import API from "../api/axiosInstance";
-
+import { useCookies } from "react-cookie";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // تخزين بيانات المستخدم (id, role)
-  const [loading, setLoading] = useState(true); // للتأكد من انتهاء فحص التوكن
-
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [cookies, setCookie, removeCookie] = useCookies(["theme"]);
   useEffect(() => {
-    // عند فتح الموقع، نفحص إذا كان هناك توكن مخزن
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
     
@@ -18,7 +17,6 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  // دالة تسجيل الدخول
   const login = (userData, token) => {
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(userData));
@@ -27,8 +25,10 @@ export const AuthProvider = ({ children }) => {
 
   // دالة تسجيل الخروج
   const logout = () => {
+    // حذف بيانات التوكن والمستخدم من الـ LocalStorage
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    removeCookie("theme", { path: "/" });
     setUser(null);
   };
 

@@ -1,25 +1,44 @@
 import { Link, useLocation } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
+import { useConfirm } from "../ui/ConfirmContext";
+import { useToast } from "../ui/ToastContext"; // تأكد من استيراد التوست
 import { 
   HiHome, HiOutlineHome, 
   HiUsers, HiOutlineUsers, 
   HiCog, HiOutlineCog, 
   HiUser, HiOutlineUser,
   HiOutlineLogout ,
-  HiFilm,HiOutlineFilm
+  HiFilm, HiOutlineFilm
 } from "react-icons/hi";
 
 const Navbar = () => {
-  const { user, logout } = useContext(AuthContext);
+  // 1. استدعاء كل الـ Hooks في بداية المكون
+  const { user, logout } = useContext(AuthContext); 
+  const askConfirm = useConfirm();
+  const showToast = useToast();
   const location = useLocation();
 
   const hideOnPages = ["/login", "/register", "/reels"]; 
   
+  // التحقق من وجود المستخدم والمسار
   if (hideOnPages.includes(location.pathname.toLowerCase()) || !user) return null;
 
   const isActive = (path) => location.pathname === path;
-
+  
+  const handleConfirmation = () => {
+    // 2. استدعاء نافذة التأكيد
+    askConfirm(
+      "تسجيل الخروج ؟", 
+      "هل أنت متأكد أنك تريد الخروج من الحساب؟", 
+      () => {
+        // تنفيذ الخروج
+        logout(); 
+        showToast("تم تسجيل الخروج بنجاح", "success");
+      }
+    );
+  };
+  
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-200 z-50 h-16 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
       <div className="flex h-full items-center justify-around px-2">
@@ -57,7 +76,7 @@ const Navbar = () => {
         </Link>
 
         {/* زر خروج */}
-        <button onClick={logout} className="flex flex-col items-center flex-1 text-error/70 hover:text-error">
+        <button onClick={handleConfirmation} className="flex flex-col items-center flex-1 text-error/70 hover:text-error">
           <HiOutlineLogout className="text-2xl" />
           <span className="text-[10px] mt-1">خروج</span>
         </button>

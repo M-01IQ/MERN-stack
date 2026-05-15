@@ -2,36 +2,49 @@ import { io } from "socket.io-client";
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from '../ui/ToastContext';
+import { useConfirm } from "../ui/ConfirmContext";
 import API from "../../api/axiosInstance"; 
 import { FaHeart, FaRegHeart, FaEdit, FaTrashAlt, FaPlus, FaSearch, FaExclamationTriangle, FaRegComment, FaShareAlt } from 'react-icons/fa';
 
 const socket = io(import.meta.env.VITE_API_URL, {
-  transports: ["websocket"], // إجبار المتصفح على استخدام Websocket مباشرة لتجنب أخطاء CORS Polling
-  withCredentials: true      // السماح بتبادل بيانات التحقق والارتباط بين Vercel و Railway
+  transports: ["websocket"],
+  withCredentials: true
 });
+
+const ExpandableText = ({ text, maxLength = 150 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  if (!text) return null;
+  if (text.length <= maxLength) {
+    return <p className="text-base-content/70 leading-relaxed whitespace-pre-wrap break-words">{text}</p>;
+  }
+  const displayedText = isExpanded ? text : text.slice(0, maxLength) + "...";
+  return (
+    <div className="text-right">
+      <p className="text-base-content/70 leading-relaxed whitespace-pre-wrap break-words">{displayedText}</p>
+      <button onClick={() => setIsExpanded(!isExpanded)} className="text-primary hover:underline text-sm font-bold mt-2 focus:outline-none">
+        {isExpanded ? "عرض أقل" : "قراءة المزيد"}
+      </button>
+    </div>
+  );
+};
 
 function Posts() {
   const { user } = useContext(AuthContext);
+  const askConfirm = useConfirm();
+  const showToast = useToast();
+  
   const [posts, setPosts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(false);
-  
-  // States للصور والبيانات
   const [preview, setPreview] = useState(null); 
   const [file, setFile] = useState(null);
   const [formData, setFormData] = useState({ title: "", avatar: "", text: "", fileId: "" });
-  
-  const showToast = useToast();
-  const [showModal, setShowModal] = useState(false);
-  const [postToDelete, setPostToDelete] = useState(null);
 
-  // --- دالة معالجة اختيار الملف والمعاينة ---
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
       setFile(selectedFile);
-      // إنشاء رابط للمعاينة يظهر فوراً للمستخدم
       setPreview(URL.createObjectURL(selectedFile));
     }
   };
@@ -50,46 +63,51 @@ function Posts() {
 
   useEffect(() => {
     fetchPosts();
-
-    // الاستماع لإضافة منشور جديد من أي مستخدم
     socket.on("newPost", (newPostFromServer) => {
-  setPosts((prev) => {
-    // التحقق مما إذا كان المنشور موجوداً مسبقاً في القائمة
-    if (prev.some(post => post._id === newPostFromServer._id)) {
-      return prev;
-    }
-    return [newPostFromServer, ...prev];
-  });
-});
-
-
-    // الاستماع لحذف منشور
+      setPosts((prev) => prev.some(post => post._id === newPostFromServer._id) ? prev : [newPostFromServer, ...prev]);
+    });
     socket.on("post_deleted", (deletedId) => {
       setPosts((prev) => prev.filter(post => post._id !== deletedId));
     });
-
-    // تنظيف الاتصال عند إغلاق المكون
     return () => {
       socket.off("newPost");
       socket.off("post_deleted");
     };
   }, []);
 
+  const resetForm = () => {
+    setEditId(null);
+    setFile(null);
+    setPreview(null);
+    setFormData({ title: "", avatar: "", text: "", fileId: "" });
+  };
+
+  const handleDeleteClick = (post) => {
+    askConfirm(
+      "تأكيد الحذف", 
+      `هل أنت متأكد من حذف المنشور "${post.title}"؟ لا يمكن التراجع عن هذا الإجراء.`, 
+      async () => {
+        try {
+          await API.delete(`/deletePost/${post._id}`);
+          setPosts(prev => prev.filter(u => u._id !== post._id));
+          showToast("تم الحذف بنجاح", "success");
+        } catch (err) {
+          showToast("خطأ في عملية الحذف", "error");
+        }
+      }
+    );
+  };
 
   const submitData = async () => {
     const { title, text } = formData;
     if (!title || !text) return showToast("يرجى ملء جميع الحقول المطلوبة", "error");
-
     setLoading(true);
     try {
       let finalAvatarUrl = formData.avatar;
       let imageKitFileId = formData.fileId;
-
-      // رفع الصورة لـ ImageKit فقط إذا تم اختيار ملف جديد
       if (file) {
         const authRes = await API.get('/imagekitRoutes');
         const authData = authRes.data;
-
         const uploadData = new FormData();
         uploadData.append("file", file);
         uploadData.append("fileName", file.name);
@@ -99,52 +117,26 @@ function Posts() {
         uploadData.append("expire", authData.expire.toString());
         uploadData.append("token", authData.token);
 
-        const imgResponse = await fetch('https://upload.imagekit.io/api/v1/files/upload', {
-          method: 'POST',
-          body: uploadData,
-        });
-
+        const imgResponse = await fetch('https://upload.imagekit.io/api/v1/files/upload', { method: 'POST', body: uploadData });
         const imgResult = await imgResponse.json();
         if (!imgResponse.ok) throw new Error("فشل رفع الصورة");
-        
         finalAvatarUrl = imgResult.url;
         imageKitFileId = imgResult.fileId; 
       }
-
       const postData = { ...formData, avatar: finalAvatarUrl, fileId: imageKitFileId };
-      
       if (editId) {
         const res = await API.put(`/UpdatePost/${editId}`, postData);
         setPosts(posts.map(u => u._id === editId ? res.data : u));
         showToast("تم التعديل بنجاح", "success");
       } else {
-        const res = await API.post("/newpost", postData);
+        await API.post("/newpost", postData);
         showToast("تم النشر بنجاح", "success");
       }
-
       resetForm();
     } catch (err) {
       showToast(err.message || "حدث خطأ ما", "error");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const resetForm = () => {
-    setEditId(null);
-    setFile(null);
-    setPreview(null); // مسح المعاينة
-    setFormData({ title: "", avatar: "", text: "", fileId: "" });
-  };
-
-  const deletePost = async () => {
-    try {
-      await API.delete(`/deletePost/${postToDelete._id}`);
-      setPosts(posts.filter(u => u._id !== postToDelete._id));
-      showToast(`تم الحذف بنجاح`, "success");
-      setShowModal(false);
-    } catch {
-      showToast("خطأ في الحذف", "error");
     }
   };
 
@@ -162,50 +154,25 @@ function Posts() {
               {editId ? <FaEdit className="text-warning" /> : <FaPlus className="text-success" />}
               {editId ? "تعديل المنشور" : "إضافة منشور جديد"}
             </h2>
-
-            <input className="input input-bordered w-full" type="text" placeholder="عنوان المنشور" 
-              value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
-            
-            <textarea className="textarea textarea-bordered w-full" placeholder="المحتوى..." 
-              value={formData.text} onChange={e => setFormData({...formData, text: e.target.value})}></textarea>
-              
-              
-              <div className="flex flex-col gap-4 w-full">
-                {(preview || formData.avatar) && (
+            <input className="input input-bordered w-full" type="text" placeholder="عنوان المنشور" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+            <textarea className="textarea textarea-bordered w-full" placeholder="المحتوى..." value={formData.text} onChange={e => setFormData({...formData, text: e.target.value})}></textarea>
+            <div className="flex flex-col gap-4 w-full">
+              {(preview || formData.avatar) && (
                 <div className="relative w-32 h-32 self-center group">
-                  <img 
-                  src={preview || formData.avatar} 
-                  alt="Preview" 
-                  className="w-full h-full object-cover rounded-2xl shadow-md border-2 border-base-300 transition-transform group-hover:scale-105" />
-                  <button 
-                  type="button"
-                  onClick={() => { setFile(null); setPreview(null); setFormData({...formData, avatar: "", fileId: ""}); }}
-                  className="btn btn-circle btn-error btn-xs absolute -top-2 -left-2 shadow-lg"
-                  >
-                    ✕
-                    </button>
-                  </div>)}
-                  <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-base-300 rounded-2xl cursor-pointer hover:bg-base-200 transition-all group">
-                    <div className="flex items-center gap-3">
-                    <div className="bg-primary/10 p-2 rounded-full group-hover:scale-110 transition-transform">
-                    <FaPlus className="text-primary" />
-                    </div>
-                    <p className="text-sm text-base-content/60 font-bold">
-                      {(preview || formData.avatar) ? "تغيير الصورة المختارة" : "إضافة صورة للمنشور"}
-                    </p>
-                    </div>
-                    <input 
-                    type="file" 
-                    className="hidden" 
-                    onChange={handleFileChange} 
-                    accept="image/*"/>
-                  </label>
+                  <img src={preview || formData.avatar} alt="Preview" className="w-full h-full object-cover rounded-2xl shadow-md border-2 border-base-300 transition-transform group-hover:scale-105" />
+                  <button type="button" onClick={() => { setFile(null); setPreview(null); setFormData({...formData, avatar: "", fileId: ""}); }} className="btn btn-circle btn-error btn-xs absolute -top-2 -left-2 shadow-lg">✕</button>
                 </div>
-
-
+              )}
+              <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-base-300 rounded-2xl cursor-pointer hover:bg-base-200 transition-all group">
+                <div className="flex items-center gap-3">
+                  <div className="bg-primary/10 p-2 rounded-full group-hover:scale-110 transition-transform"><FaPlus className="text-primary" /></div>
+                  <p className="text-sm text-base-content/60 font-bold">{(preview || formData.avatar) ? "تغيير الصورة المختارة" : "إضافة صورة للمنشور"}</p>
+                </div>
+                <input type="file" className="hidden" onChange={handleFileChange} accept="image/*"/>
+              </label>
+            </div>
             <div className="flex gap-2 pt-2">
-              <button className={`btn flex-1 ${editId ? "btn-warning" : "btn-success text-white"}`} 
-                onClick={submitData} disabled={loading}>
+              <button className={`btn flex-1 ${editId ? "btn-warning" : "btn-success text-white"}`} onClick={submitData} disabled={loading}>
                 {loading ? <span className="loading loading-spinner"></span> : (editId ? "تأكيد التعديل" : "حفظ المنشور")}
               </button>
               {editId && <button className="btn btn-ghost" onClick={resetForm}>إلغاء</button>}
@@ -214,92 +181,69 @@ function Posts() {
         </div>
       )}
 
-      {/* باقي الكود (البحث والقائمة والمودال) يبقى كما هو في ملفك الأصلي */}
-      <div className="max-w-4xl mx-auto px-4 mt-6">
-          {/* ... كود البحث و posts.map ... */}
-          {/* تأكد من استخدام filtered.map لعرض المنشورات */}
-          <div className="flex flex-col gap-3 items-center">
-            
-            {filtered.map((post) => (
-  <div key={post._id} className="card w-full  bg-base-100 shadow-[0_10px_30px_rgba(0,0,0,0.05)] border border-base-200 rounded-2xl overflow-hidden mb-4">
-    {/* صورة المنشور */}
-    <figure className="w-full h-72 overflow-hidden">
-      <img className="w-full h-full object-cover" src={post.avatar || "https://ui-avatars.com/api/?name=" + post.title} alt="post" />
-    </figure>
-
-    <div className="card-body p-3">
-      <h2 className="card-title text-xl font-black mb-2">{post.title}</h2>
-      
-      {/* الحفاظ على المسافات والأسطر كما كتبها المستخدم */}
-      <p className="text-base-content/70 leading-relaxed whitespace-pre-wrap break-words text-right mb-6">
-        {post.text}
-      </p>
-      
-      {/* شريط التفاعل - أيقونات فقط */}
-      <div className="flex items-center justify-between pt-2 border-t border-base-200">
-        <div className="flex items-center gap-4">
-          {/* زر الإعجاب */}
-          <button className="group flex items-center gap-1.5 text-gray-500 hover:text-error transition-all">
-            <div className="p-2 rounded-full group-hover:bg-error/10">
-              <FaRegHeart size={22} />
-            </div>
-            <span className="text-sm font-bold">{post.likes?.length || 0}</span>
-          </button>
-
-          {/* زر التعليق - أيقونة فقط */}
-          <button className="group flex items-center gap-1.5 text-gray-500 hover:text-primary transition-all">
-            <div className="p-2 rounded-full group-hover:bg-primary/10">
-              <FaRegComment size={22} />
-            </div>
-            <span className="text-sm font-bold">0</span>
-          </button>
+      <div className="max-w-4xl mx-auto px-0 mt-4">
+        <div className="px-4 mb-4">
+          <div className="relative">
+            <FaSearch className="absolute right-3 top-3.5 text-base-content/40" />
+            <input type="text" placeholder="ابحث عن منشور..." className="input input-bordered w-full pr-10 rounded-xl" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          </div>
         </div>
 
-        {/* زر المشاركة - أيقونة فقط */}
-        <button className="group text-gray-500 hover:text-success transition-all">
-          <div className="p-2 rounded-full group-hover:bg-success/10">
-            <FaShareAlt size={20} />
-          </div>
-        </button>
+        <div className="flex flex-col gap-3 items-center">
+          {filtered.map((post) => (
+            <div key={post._id} className="card w-full bg-base-100 shadow-sm border border-base-200 rounded-2xl overflow-hidden mb-1">
+              <div className="flex flex-row-reverse justify-end items-center p-3 gap-3">
+                <h3 className="text-lg font-bold">𝙼𝚄𝚂𝚃𝙰𝙵𝙰</h3>
+                <div className="avatar online">
+                  <div className="w-10 rounded-full">
+                    <img src="https://ik.imagekit.io/2vom8qfmg/images/profile.jpg" alt="Admin" />
+                  </div>
+                </div>
+              </div>
+              <hr className="border-base-200" />
+              <figure className="w-full h-72 overflow-hidden bg-base-300">
+                <img className="w-full h-full object-cover" src={post.avatar || "https://ui-avatars.com/api/?name=" + post.title} alt="post" />
+              </figure>
+              <div className="card-body p-4">
+                <h2 className="card-title text-xl font-black mb-1">{post.title}</h2>
+                <div className="mb-4">
+                  <ExpandableText text={post.text} maxLength={120} />
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-base-200">
+                  <div className="flex items-center gap-4">
+                    <button className="group flex items-center gap-1.5 text-gray-500 hover:text-error transition-all">
+                      <div className="p-2 rounded-full group-hover:bg-error/10"><FaRegHeart size={22} /></div>
+                      <span className="text-sm font-bold">{post.likes?.length || 0}</span>
+                    </button>
+                    <button className="group flex items-center gap-1.5 text-gray-500 hover:text-primary transition-all">
+                      <div className="p-2 rounded-full group-hover:bg-primary/10"><FaRegComment size={22} /></div>
+                      <span className="text-sm font-bold">0</span>
+                    </button>
+                  </div>
+                  <button className="group text-gray-500 hover:text-success transition-all">
+                    <div className="p-2 rounded-full group-hover:bg-success/10"><FaShareAlt size={20} /></div>
+                  </button>
+                </div>
+                {user?.role === "admin" && (
+                  <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-dashed border-base-200">
+                    <button className="btn btn-ghost btn-sm btn-circle text-info hover:bg-info/10" onClick={() => {
+                      setEditId(post._id);
+                      setFormData({ title: post.title, text: post.text, avatar: post.avatar, fileId: post.fileId });
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}>
+                      <FaEdit size={18} />
+                    </button>
+                    {/* استدعاء دالة التأكيد الجديدة هنا */}
+                    <button className="btn btn-ghost btn-sm btn-circle text-error hover:bg-error/10" onClick={() => handleDeleteClick(post)}>
+                      <FaTrashAlt size={18} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-
-      {/* أدوات التحكم للآدمن (تعديل وحذف) */}
-      {user?.role === "admin" && (
-        <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-dashed border-base-200">
-          <button className="btn btn-ghost btn-sm btn-circle text-info hover:bg-info/10" onClick={() => {
-            setEditId(post._id);
-            setFormData({ title: post.title, text: post.text, avatar: post.avatar, fileId: post.fileId });
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}>
-            <FaEdit size={18} />
-          </button>
-          <button className="btn btn-ghost btn-sm btn-circle text-error hover:bg-error/10" onClick={() => { setPostToDelete(post); setShowModal(true); }}>
-            <FaTrashAlt size={18} />
-          </button>
-        </div>
-      )}
-    </div>
-  </div>
-))}
-
-          </div>
-      </div>
-
-      {/* مودال الحذف (كما في كودك) */}
-      {showModal && (
-        <div className="modal modal-open">
-          <div className="modal-box rounded-3xl">
-            <h3 className="font-black text-lg text-error flex items-center gap-2">
-              <FaExclamationTriangle/> تأكيد الحذف
-            </h3>
-            <p className="py-4">هل أنت متأكد؟ سيتم حذف الصورة والمنشور نهائياً.</p>
-            <div className="modal-action">
-              <button className="btn btn-ghost" onClick={() => setShowModal(false)}>إلغاء</button>
-              <button className="btn btn-error text-white px-8" onClick={deletePost}>حذف</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
