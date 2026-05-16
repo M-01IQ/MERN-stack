@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { useToast } from "../Component/ui/ToastContext";
+import { useToast } from "../Component/ui/PopUp/ToastContext";
 import { Link } from "react-router-dom"; 
 import API from "../api/axiosInstance";
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useToast } from '../Component/ui/ToastContext';
+import { useToast } from '../Component/ui/PopUp/ToastContext';
+import Loader from '../Component/common/Loader';
 import API from "../api/axiosInstance"; 
 import { FaUserPlus, FaEdit, FaTrash, FaSearch, FaUser, FaShieldAlt } from "react-icons/fa";
 
@@ -130,9 +131,8 @@ function Users() {
         </div>
 
         {/* ===== قائمة المستخدمين ===== */}
-        {loading ? (
-          <div className="flex justify-center py-20"><span className="loading loading-spinner loading-lg text-success"></span></div>
-        ) : filtered.length > 0 ? (
+        {loading ? (<Loader/>) :
+        filtered.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filtered.map((user) => (
               <div key={user._id} className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow border border-base-200">

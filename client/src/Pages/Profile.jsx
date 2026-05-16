@@ -1,5 +1,6 @@
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
+import Loader from "../Component/common/Loader"
 import { FaUserCircle, FaIdBadge, FaEnvelope, FaCalendarAlt, FaShieldAlt } from "react-icons/fa";
 
 const Profile = () => {
@@ -7,11 +8,7 @@ const Profile = () => {
 
   // إذا لم يتم تحميل بيانات المستخدم بعد
   if (!user) {
-    return (
-      <div className="flex justify-center items-center h-[80vh]">
-        <span className="loading loading-spinner loading-lg text-success"></span>
-      </div>
-    );
+    return (<Loader/>);
   }
 
   return (

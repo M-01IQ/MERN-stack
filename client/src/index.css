@@ -3,3 +3,6 @@
   themes: light, dark, cupcake, bumblebee, emerald, corporate,
           synthwave, retro, cyberpunk, valentine, aqua, night, coffee, winter;
 }
+*{
+  user-select:none;
+}

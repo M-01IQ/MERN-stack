@@ -1,19 +1,18 @@
 import { Link, useLocation } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
-import { useConfirm } from "../ui/ConfirmContext";
-import { useToast } from "../ui/ToastContext";
+import { useConfirm } from "../ui/PopUp/ConfirmContext";
+import { useToast } from "../ui/PopUp/ToastContext";
 import { 
   HiHome, HiOutlineHome, 
   HiUsers, HiOutlineUsers, 
   HiCog, HiOutlineCog, 
   HiUser, HiOutlineUser,
-  HiOutlineLogout ,
   HiFilm, HiOutlineFilm
 } from "react-icons/hi";
 
 const Navbar = () => {
-  const { user, logout } = useContext(AuthContext); 
+  const { user } = useContext(AuthContext); 
   const askConfirm = useConfirm();
   const showToast = useToast();
   const location = useLocation();
@@ -23,20 +22,6 @@ const Navbar = () => {
   if (hideOnPages.includes(location.pathname.toLowerCase()) || !user) return null;
 
   const isActive = (path) => location.pathname === path;
-  
-  const handleConfirmation = () => {
-    // استدعاء نافذة التأكيد
-    askConfirm(
-      "تسجيل الخروج ؟", 
-      "هل أنت متأكد أنك تريد الخروج من الحساب؟", 
-      () => {
-        // تنفيذ الخروج
-        logout(); 
-        showToast("تم تسجيل الخروج بنجاح", "success");
-      }
-    );
-  };
-  
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-200 z-50 h-16 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
       <div className="flex h-full items-center justify-around px-2">
@@ -72,12 +57,6 @@ const Navbar = () => {
           {isActive("/Settings") ? <HiCog className="text-2xl" /> : <HiOutlineCog className="text-2xl" />}
           <span className="text-[10px] mt-1">الإعدادات</span>
         </Link>
-
-        {/* زر خروج */}
-        <button onClick={handleConfirmation} className="flex flex-col items-center flex-1 text-error/70 hover:text-error">
-          <HiOutlineLogout className="text-2xl" />
-          <span className="text-[10px] mt-1">خروج</span>
-        </button>
 
       </div>
     </div>

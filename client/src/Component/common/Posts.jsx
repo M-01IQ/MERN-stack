@@ -1,8 +1,9 @@
 import { io } from "socket.io-client";
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
-import { useToast } from '../ui/ToastContext';
-import { useConfirm } from "../ui/ConfirmContext";
+import { useToast } from '../ui/PopUp/ToastContext';
+import { useConfirm } from "../ui/PopUp/ConfirmContext";
+import Loader from "../common/Loader";
 import API from "../../api/axiosInstance"; 
 import { FaHeart, FaRegHeart, FaEdit, FaTrashAlt, FaPlus, FaSearch, FaExclamationTriangle, FaRegComment, FaShareAlt } from 'react-icons/fa';
 
@@ -11,6 +12,7 @@ const socket = io(import.meta.env.VITE_API_URL, {
   withCredentials: true
 });
 
+//عرض المزيد من النص
 const ExpandableText = ({ text, maxLength = 150 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   if (!text) return null;
@@ -147,6 +149,7 @@ function Posts() {
 
   return (
     <div dir="rtl" className="min-h-screen bg-base-200 pb-24 font-sans w-full">
+      {/* ===== اضافة منشور ===== */}
       {user?.role === "admin" && (
         <div className="bg-base-100 border-b border-base-300 px-4 py-6 shadow-sm">
           <div className="max-w-2xl mx-auto space-y-4">
@@ -173,22 +176,24 @@ function Posts() {
             </div>
             <div className="flex gap-2 pt-2">
               <button className={`btn flex-1 ${editId ? "btn-warning" : "btn-success text-white"}`} onClick={submitData} disabled={loading}>
-                {loading ? <span className="loading loading-spinner"></span> : (editId ? "تأكيد التعديل" : "حفظ المنشور")}
+                {loading ? <Loader size="small"/> : (editId ? "تأكيد التعديل" : "حفظ المنشور")}
               </button>
               {editId && <button className="btn btn-ghost" onClick={resetForm}>إلغاء</button>}
             </div>
           </div>
         </div>
       )}
-
+      
       <div className="max-w-4xl mx-auto px-0 mt-4">
+        {/* ===== البحث عن منشور ===== */}
         <div className="px-4 mb-4">
           <div className="relative">
             <FaSearch className="absolute right-3 top-3.5 text-base-content/40" />
             <input type="text" placeholder="ابحث عن منشور..." className="input input-bordered w-full pr-10 rounded-xl" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
         </div>
-
+        {/* ===== عرض المنشورات ===== */}
+        {loading?(<Loader/>):(
         <div className="flex flex-col gap-3 items-center">
           {filtered.map((post) => (
             <div key={post._id} className="card w-full bg-base-100 shadow-sm border border-base-200 rounded-2xl overflow-hidden mb-1">
@@ -242,7 +247,7 @@ function Posts() {
               </div>
             </div>
           ))}
-        </div>
+        </div>)}
       </div>
     </div>
   );
