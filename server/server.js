@@ -8,7 +8,7 @@ const connectDB = require("./src/config/db");
 const userRoutes = require("./src/routes/userRoutes");
 const postRoutes = require("./src/routes/postRoutes");
 const imagekitRoutes = require("./src/routes/imagekitRoutes");
-
+const reelRoutes = require('./src/routes/reelRoutes');
 const app = express();
 const PORT = process.env.PORT || 8080;
 const frontend = process.env.frontend;
@@ -48,6 +48,7 @@ app.get("/", (req, res) => { res.send("server is running 🚀") });
 app.use("/api", userRoutes);
 app.use("/api", postRoutes);
 app.use('/api/', imagekitRoutes);
+app.use('/api/reels', reelRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

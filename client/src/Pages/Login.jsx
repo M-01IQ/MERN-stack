@@ -12,18 +12,11 @@ const Login = () => {
   const { login } = useContext(AuthContext);
   const showToast = useToast();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!username || !password) {
-      return showToast("يرجى إدخال اسم المستخدم وكلمة المرور", "error");
-    }
-
+  const executeLogin = async (userFields) => {
     try {
       setLoading(true);
-      const res = await API.post("/login", { username, password });
+      const res = await API.post("/login", userFields);
       
-      //LOGIN
       login({ 
         id: res.data.userID, 
         username: res.data.username,
@@ -39,6 +32,21 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!username || !password) {
+      return showToast("يرجى إدخال اسم المستخدم وكلمة المرور", "error");
+    }
+    executeLogin({ username, password });
+  };
+
+  const handleGuestLogin = () => {
+    executeLogin({ 
+      username: "guest",
+      password: "guestpassword123"
+    });
   };
 
   return (
@@ -77,17 +85,22 @@ const Login = () => {
               />
             </div>
 
-            <div className="form-control mt-6">
+            <div className="form-control mt-6 space-y-3">
               <button 
                 type="submit" 
                 disabled={loading}
                 className="btn btn-success w-full text-white font-bold shadow-lg"
               >
-                {loading ? (
-                  <span className="loading loading-spinner loading-sm"></span>
-                ) : (
-                  "تسجيل الدخول"
-                )}
+                {loading ? <span className="loading loading-spinner loading-sm"></span> : "تسجيل الدخول"}
+              </button>
+
+              <button 
+                type="button" 
+                disabled={loading}
+                onClick={handleGuestLogin}
+                className="btn bg-gray-500 hover:bg-gray-600 border-none text-white w-full font-bold transition-all shadow-md"
+              >
+                تسجيل الدخول كضيف
               </button>
 
               <div className="mt-6 text-center text-sm border-t border-base-200 pt-4">
