@@ -182,7 +182,7 @@ const Reels = () => {
 
   const fetchReels = async () => {
     try {
-      const response = await fetch(API_URL);
+      const response = await fetch(`${API_URL}/api/reels/`);
       const data = await response.json();
       setVideoData(data);
     } catch (error) {
@@ -202,7 +202,7 @@ const Reels = () => {
     if (window.confirm("هل أنت متأكد من حذف هذا الريل نهائياً؟")) {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch(`${API_URL}/${id}`, { 
+        const response = await fetch(`${API_URL}/api/reels/${id}`, { 
           method: "DELETE",
           headers: {
             "Authorization": `Bearer ${token}`
@@ -229,7 +229,7 @@ const Reels = () => {
     try {
       // إرسال التوكن مع طلب النشر
       const token = localStorage.getItem("token");
-      const response = await fetch(API_URL, {
+      const response = await fetch(`${API_URL}/api/reels/`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
