@@ -8,7 +8,8 @@ import {
   HiUsers, HiOutlineUsers, 
   HiCog, HiOutlineCog, 
   HiUser, HiOutlineUser,
-  HiFilm, HiOutlineFilm
+  HiFilm, HiOutlineFilm,
+  HiBell, HiOutlineBell
 } from "react-icons/hi";
 
 const Navbar = () => {
@@ -50,6 +51,12 @@ const Navbar = () => {
         <Link to="/profile" className={`flex flex-col items-center flex-1 ${isActive("/profile") ? "text-primary" : "text-gray-400"}`}>
           {isActive("/profile") ? <HiUser className="text-2xl" /> : <HiOutlineUser className="text-2xl" />}
           <span className="text-[10px] mt-1">حسابي</span>
+        </Link>
+        
+        {/* الاشعارات  */}
+        <Link to="/Notifications" className={`flex flex-col items-center flex-1 ${isActive("/Notifications") ? "text-primary" : "text-gray-400"}`}>
+          {isActive("/Notifications") ? <HiBell className="text-2xl" /> : <HiOutlineBell className="text-2xl" />}
+          <span className="text-[10px] mt-1">الاشعارات</span>
         </Link>
 
         {/* الإعدادات */}

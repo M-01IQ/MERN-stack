@@ -5,8 +5,7 @@ import { useToast } from '../ui/PopUp/ToastContext';
 import { useConfirm } from "../ui/PopUp/ConfirmContext";
 import Loader from "../common/Loader";
 import API from "../../api/axiosInstance"; 
-import { FaHeart, FaRegHeart, FaEdit, FaTrashAlt, FaPlus, FaSearch, FaExclamationTriangle, FaRegComment, FaShareAlt } from 'react-icons/fa';
-
+import { FaHeart, FaRegHeart, FaEdit, FaTrashAlt, FaPlus, FaSearch, FaExclamationTriangle, FaRegComment, FaShareAlt,FaCheckCircle} from 'react-icons/fa';
 const socket = io(import.meta.env.VITE_API_URL, {
   transports: ["websocket"],
   withCredentials: true
@@ -198,9 +197,34 @@ function Posts() {
           {filtered.map((post) => (
             <div key={post._id} className="card w-full bg-base-100 shadow-sm border border-base-200 rounded-2xl overflow-hidden mb-1">
               <div className="flex flex-row-reverse justify-end items-center p-3 gap-3">
-                <h3 className="text-lg font-bold">𝙼𝚄𝚂𝚃𝙰𝙵𝙰</h3>
+                
+                
+<div className="flex flex-col gap-0.5 text-right">
+  {/* الاسم مع علامة التوثيق */}
+  <div className="flex items-center gap-1.5 justify-end">
+    
+    {/* أيقونة التوثيق المطابقة لـ X وإنستغرام (SVG مخصص وعالي الدقة) */}
+    <svg 
+      className="w-[18px] h-[18px] text-[#1d9bf0] fill-current flex-shrink-0" 
+      viewBox="0 0 24 24" 
+      aria-label="Verified account"
+    >
+      <g>
+        <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.99-3.818-3.99-.48 0-.94.1-1.348.27C14.825 2.515 13.512 1.5 12 1.5s-2.825 1.015-3.422 2.28c-.406-.17-.866-.27-1.348-.27-2.108 0-3.818 1.78-3.818 3.99 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.58.875 2.95 2.148 3.6-.154.435-.238.905-.238 1.4 0 2.21 1.71 3.99 3.818 3.99.48 0 .94-.1 1.348-.27.597 1.265 1.91 2.28 3.422 2.28s2.825-1.015 3.422-2.28c.406.17.866.27 1.348.27 2.108 0 3.818-1.78 3.818-3.99 0-.495-.084-.965-.238-1.4 1.273-.65 2.148-2.02 2.148-3.6zm-12.5 4l-4.25-4.25 1.4-1.4 2.85 2.85 6.65-6.65 1.4 1.4-8.05 8.05z"></path>
+      </g>
+    </svg>
+    
+    <h3 className="text-lg font-bold text-base-content leading-none">𝙼𝚄𝚂𝚃𝙰𝙵𝙰</h3>
+  </div>
+  
+  {/*user/admin */}
+  <span className="text-xs opacity-60 font-medium tracking-wide pr-1">admin</span>
+</div>
+
+
+                
                 <div className="avatar online">
-                  <div className="w-10 rounded-full">
+                  <div className="w-12 h-12 rounded-full border-1 border-primary overflow-hidden shadow-lg mt-2">
                     <img src="https://ik.imagekit.io/2vom8qfmg/images/profile.jpg" alt="Admin" />
                   </div>
                 </div>

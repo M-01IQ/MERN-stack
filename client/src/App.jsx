@@ -6,13 +6,14 @@ import { useCookies } from "react-cookie";
 
 import Navbar from './Component/common/Navbar';
 import Loader from './Component/common/Loader';
+import Register from "./Pages/Register";
+import Login from "./Pages/Login";
 import HomePage from "./Pages/HomePage";
 import Users from "./Pages/Users";
-import Login from "./Pages/Login";
-import Register from "./Pages/Register";
-import Settings from "./Pages/Settings";
-import Profile from "./Pages/Profile";
 import Reels from "./Pages/Reels";
+import Profile from "./Pages/Profile";
+import Notifications from "./Pages/Notifications";
+import Settings from "./Pages/Settings";
 
 function App() {
   const { user, loading } = useContext(AuthContext);
@@ -45,10 +46,11 @@ function App() {
             <main className={`container mx-auto p-0 ${isReelsPage ? '' : 'pb-15'}`}>
               <Routes>
                 <Route path="/" element={<HomePage />} />
-                <Route path="/Reels" element={<Reels/>} />
                 <Route path="/Users" element={<Users />} />
-                <Route path="/Settings" element={<Settings />} />
+                <Route path="/Reels" element={<Reels/>} />
                 <Route path="/Profile" element={<Profile />} />
+                <Route path="/Notifications" element={<Notifications />} />
+                <Route path="/Settings" element={<Settings />} />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
             </main>

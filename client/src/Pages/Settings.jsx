@@ -47,7 +47,7 @@ export default function Settings() {
   return (
     <div dir="rtl" className="min-h-screen bg-base-200 py-10 px-4">
       <div className="max-w-2xl mx-auto flex flex-col gap-6">
-        <h1 className="text-3xl font-black text-base-content">الإعدادات</h1>
+        <h1 className="text-2xl font-black text-base-content">الإعدادات</h1>
         
         <div className="card bg-base-100 shadow-md">
           {/* قسم الثيم */}
