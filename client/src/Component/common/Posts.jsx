@@ -203,7 +203,7 @@ function Posts() {
   {/* الاسم مع علامة التوثيق */}
   <div className="flex items-center gap-1.5 justify-end">
     
-    {/* أيقونة التوثيق المطابقة لـ X وإنستغرام (SVG مخصص وعالي الدقة) */}
+    {/* أيقونة التوثيق */}
     <svg 
       className="w-[18px] h-[18px] text-[#1d9bf0] fill-current flex-shrink-0" 
       viewBox="0 0 24 24" 

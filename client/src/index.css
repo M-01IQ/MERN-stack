@@ -6,3 +6,14 @@
 *{
   user-select:none;
 }
+
+/* إخفاء شريط التمرير في متصفحات Chrome, Safari, Edge */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* إخفاء شريط التمرير في متصفح Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
