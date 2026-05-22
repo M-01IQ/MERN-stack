@@ -45,16 +45,16 @@ const Register = () => {
     }
   };
   return (
-    <div className="min-h-[70vh] flex items-start justify-center p-4">
+    <div className="min-h-[100vh] flex items-center justify-center p-4">
       <div className="card w-full max-w-md bg-base-100 shadow-2xl border border-success/20">
         <div className="card-body">
           <h2 className="card-title justify-center text-2xl font-bold mb-4 text-success">إنشاء حساب</h2>
           <form onSubmit={onSubmit} className="space-y-4">
             
-            <div className="form-control">
-              <label className="label"><span className="label-text font-medium">اسم المستخدم</span></label>
+            <div className="form-control flex flex-col">
+              <label className="label m-2"><span className="label-text font-medium">اسم المستخدم</span></label>
               <input 
-                className="input input-bordered focus:input-success transition-all" 
+                className="input input-bordered w-full focus:input-success transition-all" 
                 type="text" 
                 placeholder="أدخل اسم المستخدم" 
                 value={username} 
@@ -62,10 +62,10 @@ const Register = () => {
               />
             </div>
 
-            <div className="form-control">
-              <label className="label"><span className="label-text font-medium">البريد الإلكتروني</span></label>
+            <div className="form-control flex flex-col">
+              <label className="label m-2"><span className="label-text font-medium">البريد الإلكتروني</span></label>
               <input 
-                className="input input-bordered focus:input-success transition-all" 
+                className="input input-bordered w-full focus:input-success transition-all" 
                 type="email" 
                 placeholder="email@example.com" 
                 value={email} 
@@ -73,10 +73,10 @@ const Register = () => {
               />
             </div>
 
-            <div className="form-control">
-              <label className="label"><span className="label-text font-medium">كلمة المرور</span></label>
+            <div className="form-control flex flex-col">
+              <label className="label m-2"><span className="label-text font-medium">كلمة المرور</span></label>
               <input 
-                className="input input-bordered focus:input-success transition-all" 
+                className="input input-bordered w-full focus:input-success transition-all" 
                 type="password" 
                 placeholder="••••••••" 
                 value={password} 

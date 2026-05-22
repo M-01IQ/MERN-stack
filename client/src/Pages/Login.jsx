@@ -50,7 +50,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-[70vh] flex items-start justify-center p-4 bg-base-200">
+    <div className="min-h-[100vh] flex items-center justify-center p-4 bg-base-200">
       <div className="card w-full max-w-md bg-base-100 shadow-2xl border border-success/20 mt-10">
         <div className="card-body">
           <h2 className="card-title justify-center text-2xl font-black mb-4 text-success">
@@ -59,12 +59,12 @@ const Login = () => {
           
           <form onSubmit={handleSubmit} className="space-y-4">
             
-            <div className="form-control">
-              <label className="label">
+            <div className="form-control flex flex-col">
+              <label className="label m-2">
                 <span className="label-text font-bold">اسم المستخدم</span>
               </label>
               <input 
-                className="input input-bordered focus:input-success transition-all bg-base-200/50" 
+                className="input input-bordered w-full focus:input-success transition-all bg-base-200/50" 
                 type="text" 
                 placeholder="أدخل اسم المستخدم" 
                 value={username} 
@@ -72,12 +72,12 @@ const Login = () => {
               />
             </div>
 
-            <div className="form-control">
-              <label className="label">
+            <div className="form-control flex flex-col">
+              <label className="label m-2">
                 <span className="label-text font-bold">كلمة المرور</span>
               </label>
               <input 
-                className="input input-bordered focus:input-success transition-all bg-base-200/50" 
+                className="input input-bordered w-full focus:input-success transition-all bg-base-200/50" 
                 type="password" 
                 placeholder="••••••••" 
                 value={password} 
