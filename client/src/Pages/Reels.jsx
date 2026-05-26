@@ -1,3 +1,4 @@
+import Loader from "../Component/common/Loader"
 import { useNavigate } from "react-router-dom";
 import React, { useState, useRef, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
@@ -252,10 +253,8 @@ const Reels = () => {
 
   if (loading) {
     return (
-      <div className="h-screen w-full bg-black flex items-center justify-center text-white text-xl">
-        جاري تحميل الفيديوهات...
-      </div>
-    );
+      <Loader></Loader>
+      );
   }
 
   return (
