@@ -30,7 +30,7 @@ function Posts() {
   const [formLoading, setFormLoading] = useState(false); // لودينج خاص بأزرار الفورم فقط
   const [preview, setPreview] = useState(null); 
   const [file, setFile] = useState(null);
-  const [formData, setFormData] = useState({ title: "", avatar: "", text: "", fileId: "" });
+  const [formData, setFormData] = useState({avatar: "", text: "", fileId: "" });
 
   // 🟢 جلب المنشورات وحفظها في الكاش تلقائياً (تستبدل fetchPosts بالكامل)
   const { data: posts = [], isLoading } = useQuery({
@@ -85,14 +85,14 @@ function Posts() {
     setEditId(null);
     setFile(null);
     setPreview(null);
-    setFormData({ title: "", avatar: "", text: "", fileId: "" });
+    setFormData({avatar: "", text: "", fileId: "" });
     setIsFormOpen(false);
   };
 
   // دالة تعديل المنشور
   const handleEditClick = (post) => {
     setEditId(post._id);
-    setFormData({ title: post.title, text: post.text, avatar: post.avatar, fileId: post.fileId });
+    setFormData({text: post.text, avatar: post.avatar, fileId: post.fileId });
     setIsFormOpen(true);
   };
 
@@ -100,7 +100,7 @@ function Posts() {
   const handleDeleteClick = (post) => {
     askConfirm(
       "تأكيد الحذف", 
-      `هل أنت متأكد من حذف المنشور "${post.title}"؟ لا يمكن التراجع عن هذا الإجراء.`, 
+      `هل أنت متأكد من حذف المنشور "${post.text}"؟ لا يمكن التراجع عن هذا الإجراء.`, 
       async () => {
         try {
           await API.delete(`/deletePost/${post._id}`);
@@ -116,8 +116,8 @@ function Posts() {
 
   // دالة اضافة وتعديل المنشور
   const submitData = async () => {
-    const { title, text } = formData;
-    if (!title || !text) return showToast("يرجى ملء جميع الحقول المطلوبة", "error");
+    const { text } = formData;
+    if (!text) return showToast("يرجى ملء جميع الحقول المطلوبة", "error");
     setFormLoading(true);
     try {
       let finalAvatarUrl = formData.avatar;
@@ -163,7 +163,6 @@ function Posts() {
   };
 
   const filtered = posts.filter(u => 
-    u.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.text?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
