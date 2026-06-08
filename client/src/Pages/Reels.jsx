@@ -2,6 +2,10 @@ import Loader from "../Component/common/Loader"
 import { useNavigate } from "react-router-dom";
 import React, { useState, useRef, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
+
+// 1️⃣ استيراد الـ Hooks الخاصة بإدارة الكاش من React Query
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+
 import {
   Heart,
   MessageCircle,
@@ -31,35 +35,33 @@ const ReelItem = ({
   isGlobalMuted,
   toggleMute,
   onDelete,
-  isAdminUser // استلام حالة الأدمن كـ Prop
+  isAdminUser 
 }) => {
   const [playing, setPlaying] = useState(false);
   const videoRef = useRef(null);
 
   useEffect(() => {
-  const options = { threshold: 0.7 };
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      // 🟢 إضافة التحقق هنا لمنع خطأ الـ null pointer
-      if (videoRef.current) { 
-        if (entry.isIntersecting) {
-          videoRef.current.play().catch(() => {});
-          setPlaying(true);
-        } else {
-          videoRef.current.pause(); // 👈 هنا كان يحدث الانهيار والآن أصبح محمياً
-          setPlaying(false);
+    const options = { threshold: 0.7 };
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (videoRef.current) { 
+          if (entry.isIntersecting) {
+            videoRef.current.play().catch(() => {});
+            setPlaying(true);
+          } else {
+            videoRef.current.pause(); 
+            setPlaying(false);
+          }
         }
-      }
-    });
-  }, options);
+      });
+    }, options);
 
-  if (videoRef.current) observer.observe(videoRef.current);
-  
-  return () => {
-    if (videoRef.current) observer.unobserve(videoRef.current);
-  };
-}, []);
-
+    if (videoRef.current) observer.observe(videoRef.current);
+    
+    return () => {
+      if (videoRef.current) observer.unobserve(videoRef.current);
+    };
+  }, []);
 
   const togglePlay = () => {
     if (playing) {
@@ -101,7 +103,6 @@ const ReelItem = ({
         {/* الأزرار الجانبية */}
         <div className="absolute right-4 bottom-24 flex flex-col gap-6 items-center z-30">
           
-          {/* 🔒 زر الحذف: يظهر فقط إذا كان المستخدم المسجل حالياً Admin */}
           {isAdminUser && (
             <button 
               onClick={(e) => { e.stopPropagation(); onDelete(id); }}
@@ -131,7 +132,7 @@ const ReelItem = ({
           </button>
 
           <div className="w-12 h-12 rounded-full border-2 border-primary overflow-hidden shadow-lg mt-2">
-            <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+            <img src={avatarUrl || "https://via.placeholder.com/150"} alt="avatar" className="w-full h-full object-cover" />
           </div>
         </div>
 
@@ -148,7 +149,7 @@ const ReelItem = ({
 
           <div className="flex items-center gap-2 text-sm bg-black/30 w-fit px-3 py-1 rounded-full backdrop-blur-sm">
             <Music2 size={14} />
-            <span className="overflow-hidden whitespace-nowrap max-w-[120px] inline-block">{songName}</span>
+            <span className="overflow-hidden whitespace-nowrap max-w-[120px] inline-block">{songName || "صوت أصلي"}</span>
           </div>
         </div>
       </div>
@@ -159,17 +160,14 @@ const ReelItem = ({
 // --- المكون الرئيسي ---
 const Reels = () => {
   const navigate = useNavigate();
-  
-  // 3. استهلاك التوكن وبيانات المستخدم من الكونتكس
+  const queryClient = useQueryClient(); // محرك التحكم في كاش التطبيق
   const { user } = useContext(AuthContext); 
-  
-  // 4. التحقق مما إذا كان حساب المستخدم الحالي هو أدمن بالفعل (تأكد من تسمية الحقل 'admin' في قاعدة بياناتك)
   const isAdminUser = user && user.role === "admin"; 
 
-  const [videoData, setVideoData] = useState([]);
   const [isGlobalMuted, setIsGlobalMuted] = useState(true);
-  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formLoading, setFormLoading] = useState(false); // لودينج خاص بالفورم فقط
+  
   const [newReel, setNewReel] = useState({
     videoUrl: "",
     username: "",
@@ -177,26 +175,21 @@ const Reels = () => {
     songName: ""
   });
 
-  useEffect(() => {
-    fetchReels();
-  }, []);
-
-  const fetchReels = async () => {
-    try {
+  // 2️⃣ جلب الريلز وحفظها في الكاش تلقائياً ببديل ذكي للـ useEffect القديم
+  const { data: videoData = [], isLoading } = useQuery({
+    queryKey: ['reels'], // الكاش الفريد لصفحة الريلز
+    queryFn: async () => {
       const response = await fetch(`${API_URL}/api/reels/`);
-      const data = await response.json();
-      setVideoData(data);
-    } catch (error) {
-      console.error("Error fetching reels:", error);
-    } finally {
-      setLoading(false);
+      if (!response.ok) throw new Error("فشل جلب الفيديوهات");
+      return response.json();
     }
-  };
+  });
 
   const toggleMute = () => {
     setIsGlobalMuted((prev) => !prev);
   };
 
+  // دالة الحذف الذكية مع تعديل الكاش فوراً
   const handleDeleteReel = async (id) => {
     if (!isAdminUser) return;
 
@@ -209,8 +202,12 @@ const Reels = () => {
             "Authorization": `Bearer ${token}`
           }
         });
+        
         if (response.ok) {
-          setVideoData((prev) => prev.filter((video) => video._id !== id));
+          // مسح الفيديو من الكاش فوراً ليختفي من الشاشة بدون ريفريش
+          queryClient.setQueryData(['reels'], (oldReels = []) => 
+            oldReels.filter((video) => video._id !== id)
+          );
         }
       } catch (error) {
         console.error("Error deleting reel:", error);
@@ -218,6 +215,7 @@ const Reels = () => {
     }
   };
 
+  // دالة الإضافة الذكية
   const handleCreateReel = async (e) => {
     e.preventDefault();
     if (!isAdminUser) return;
@@ -227,8 +225,8 @@ const Reels = () => {
       return;
     }
 
+    setFormLoading(true);
     try {
-      // إرسال التوكن مع طلب النشر
       const token = localStorage.getItem("token");
       const response = await fetch(`${API_URL}/api/reels/`, {
         method: "POST",
@@ -241,20 +239,27 @@ const Reels = () => {
 
       if (response.ok) {
         const savedData = await response.json();
-        setVideoData((prev) => [savedData, ...prev]);
+        
+        // 🟢 إضافة الفيديو الجديد لأول الكاش فوراً ليظهر مباشرةً
+        queryClient.setQueryData(['reels'], (oldReels = []) => [savedData, ...oldReels]);
+        
         setIsModalOpen(false);
         setNewReel({ videoUrl: "", username: "", description: "", songName: "" });
         alert("تم نشر الفيديو بنجاح! 🎉");
+        
+        // تحديث ومزامنة صامتة بالخلفية مع السيرفر
+        queryClient.invalidateQueries(['reels']);
       }
     } catch (error) {
       console.error("Error creating reel:", error);
+    } finally {
+      setFormLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <Loader></Loader>
-      );
+  // الـ Loader الأصلي يظهر مرة واحدة فقط في تاريخ فتح الصفحة
+  if (isLoading && videoData.length === 0) {
+    return <Loader />;
   }
 
   return (
@@ -268,7 +273,7 @@ const Reels = () => {
         <ArrowRight size={24} />
       </button>
 
-      {/* 🔒 زر الرفع (+): يظهر فقط وفقط إذا كان المستخدم أدمن */}
+      {/* زر الرفع (+) للـ Admin */}
       {isAdminUser && (
         <button 
           onClick={() => setIsModalOpen(true)} 
@@ -283,7 +288,7 @@ const Reels = () => {
       {isAdminUser && isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4">
           <div className="bg-neutral-900 border border-white/10 text-white w-full max-w-md p-6 rounded-2xl relative shadow-2xl" dir="rtl">
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-4 left-4 p-1 text-gray-400 hover:text-white rounded-full bg-white/5">
+            <button onClick={() => setIsModalOpen(false)} className="absolute top-4 left-4 p-1 text-gray-400 hover:text-white rounded-full bg-white/5" disabled={formLoading}>
               <X size={20} />
             </button>
             <h3 className="text-xl font-bold mb-4 text-center border-b border-white/10 pb-2">إضافة ريل (Reel) جديد</h3>
@@ -296,6 +301,7 @@ const Reels = () => {
                   value={newReel.username}
                   onChange={(e) => setNewReel({...newReel, username: e.target.value})}
                   required
+                  disabled={formLoading}
                 />
               </div>
               <div>
@@ -306,6 +312,7 @@ const Reels = () => {
                   value={newReel.videoUrl}
                   onChange={(e) => setNewReel({...newReel, videoUrl: e.target.value})}
                   required
+                  disabled={formLoading}
                 />
               </div>
               <div>
@@ -315,6 +322,7 @@ const Reels = () => {
                   className="w-full bg-black/40 border border-white/10 p-2.5 rounded-xl text-sm text-right resize-none focus:outline-none focus:border-blue-500"
                   value={newReel.description}
                   onChange={(e) => setNewReel({...newReel, description: e.target.value})}
+                  disabled={formLoading}
                 />
               </div>
               <div>
@@ -324,10 +332,11 @@ const Reels = () => {
                   className="w-full bg-black/40 border border-white/10 p-2.5 rounded-xl text-sm text-right focus:outline-none focus:border-blue-500"
                   value={newReel.songName}
                   onChange={(e) => setNewReel({...newReel, songName: e.target.value})}
+                  disabled={formLoading}
                 />
               </div>
-              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl font-bold mt-2">
-                نشر الفيديو الآن 🚀
+              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl font-bold mt-2 flex justify-center items-center" disabled={formLoading}>
+                {formLoading ? "جاري النشر..." : "نشر الفيديو الآن 🚀"}
               </button>
             </form>
           </div>

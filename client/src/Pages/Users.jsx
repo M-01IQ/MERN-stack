@@ -4,33 +4,29 @@ import Loader from '../Component/common/Loader';
 import API from "../api/axiosInstance"; 
 import { FaUserPlus, FaEdit, FaTrash, FaSearch, FaUser, FaShieldAlt } from "react-icons/fa";
 
+// 1️⃣ استيراد الـ Hooks الخاصة بإدارة الكاش من React Query
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+
 function Users() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient(); // محرك التحكم في كاش التطبيق
+  const showToast = useToast();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [editId, setEditId] = useState(null);
-  
-  // متوافق مع الـ Schema الخاص بك
+  const [formLoading, setFormLoading] = useState(false); // لودينج خاص بحالة الأزرار فقط لعدم قفل الصفحة
   const [formData, setFormData] = useState({ username: "", age: "", email: "", role: "user" });
-  
-  const showToast = useToast();
   const [showModal, setShowModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
 
-  // جلب المستخدمين
-  const fetchUsers = () => {
-    setLoading(true);
-    API.get("/users") 
-      .then(res => setUsers(res.data))
-      .catch(() => showToast("خطأ في جلب المستخدمين", "error"))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  // دالة البحث وتصفية البيانات (يجب أن تكون قبل الـ return)
+  // 2️⃣ جلب المستخدمين وحفظهم في الكاش تلقائياً (بديل دالة fetchUsers والـ useEffect القديم)
+  const { data: users = [], isLoading } = useQuery({
+    queryKey: ['users'], // المعرف الفريد لكاش المستخدمين
+    queryFn: async () => {
+      const res = await API.get("/users");
+      return res.data;
+    }
+  });
+  // تصفية البيانات بناءً على الكاش المجلوب
   const filtered = users.filter(u => 
     u.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.email?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -41,35 +37,57 @@ function Users() {
     setFormData({ username: "", age: "", email: "", role: "user" });
   };
 
+  // دالة إضافة وتعديل المستخدم مع تحديث الكاش ذكياً
   const submitData = async () => {
     const { username, age, email, role } = formData;
     if (!username || !age || !email) return showToast("يرجى ملء جميع الحقول", "error");
     
+    setFormLoading(true);
     try {
       if (editId) {
         const res = await API.put(`/UpdateUser/${editId}`, formData);
-        setUsers(users.map(u => u._id === editId ? res.data : u));
+        
+        // 🟢 تحديث الكاش محلياً فوراً للتعديل بدون ريفريش
+        queryClient.setQueryData(['users'], (oldUsers = []) =>
+          oldUsers.map(u => u._id === editId ? res.data : u)
+        );
         showToast("تم تعديل المستخدم بنجاح", "success");
       } else {
-        // إضافة مستخدم جديد (Register)
-        const res = await API.post("/register", { ...formData, password: "123" }); // كلمة مرور افتراضية عند الإضافة اليدوية
-        setUsers([...users, res.data]);
+        // إضافة مستخدم جديد
+        const res = await API.post("/register", { ...formData, password: "123" });
+        
+        // 🟢 تحديث الكاش محلياً فوراً للمستخدم الجديد
+        queryClient.setQueryData(['users'], (oldUsers = []) => [...oldUsers, res.data]);
         showToast("تم إضافة المستخدم بنجاح", "success");
       }
+      
+      // عمل مزامنة وتحديث صامت في الخلفية للتأكد من تطابق البيانات مع السيرفر
+      queryClient.invalidateQueries(['users']);
       resetForm();
     } catch (err) {
       showToast(err.response?.data?.message || "حدث خطأ ما", "error");
+    } finally {
+      setFormLoading(false);
     }
   };
 
+  // دالة الحذف وتحديث الكاش
   const deleteUser = () => {
     if (!userToDelete) return;
+    
     API.delete(`/deleteUser/${userToDelete._id}`)
       .then(() => {
-        setUsers(users.filter(u => u._id !== userToDelete._id));
+        // 🟢 حذف المستخدم من الكاش فوراً لتختفي البطاقة من الشاشة بسرعة وسلاسة
+        queryClient.setQueryData(['users'], (oldUsers = []) => 
+          oldUsers.filter(u => u._id !== userToDelete._id)
+        );
+        
         showToast(`تم حذف ${userToDelete.username} بنجاح`, "success");
         setShowModal(false);
         setUserToDelete(null);
+        
+        // مزامنة صامتة في الخلفية
+        queryClient.invalidateQueries(['users']);
       })
       .catch(() => showToast("حدث خطأ أثناء حذف المستخدم", "error"));
   };
@@ -86,23 +104,23 @@ function Users() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
             <input className="input input-bordered w-full focus:input-success" type="text" placeholder="اسم المستخدم" 
-              value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} />
+              value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} disabled={formLoading} />
             <input className="input input-bordered w-full focus:input-success" type="email" placeholder="الايميل" 
-              value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+              value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} disabled={formLoading} />
             <input className="input input-bordered w-full focus:input-success" type="number" placeholder="العمر" 
-              value={formData.age} onChange={e => setFormData({...formData, age: e.target.value})} />
+              value={formData.age} onChange={e => setFormData({...formData, age: e.target.value})} disabled={formLoading} />
             <select className="select select-bordered w-full" value={formData.role} 
-              onChange={e => setFormData({...formData, role: e.target.value})}>
+              onChange={e => setFormData({...formData, role: e.target.value})} disabled={formLoading}>
               <option value="user">مستخدم عادي</option>
               <option value="admin">مسؤول (Admin)</option>
             </select>
           </div>
 
           <div className="flex gap-2">
-            <button className={`btn flex-1 ${editId ? "btn-warning" : "btn-success"}`} onClick={submitData}>
+            <button className={`btn flex-1 ${editId ? "btn-warning" : "btn-success"} ${formLoading ? "loading" : ""}`} onClick={submitData} disabled={formLoading}>
               {editId ? "تأكيد التعديل" : "حفظ المستخدم"}
             </button>
-            {editId && <button className="btn btn-ghost" onClick={resetForm}>إلغاء</button>}
+            {editId && <button className="btn btn-ghost" onClick={resetForm} disabled={formLoading}>إلغاء</button>}
           </div>
         </div>
       </div>
@@ -130,8 +148,8 @@ function Users() {
           </div>
         </div>
 
-        {/* ===== قائمة المستخدمين ===== */}
-        {loading ? (<Loader/>) :
+        {/* ===== قائمة المستخدمين الذكية بـ React Query ===== */}
+        {isLoading && users.length === 0 ? (<Loader/>) :
         filtered.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filtered.map((user) => (

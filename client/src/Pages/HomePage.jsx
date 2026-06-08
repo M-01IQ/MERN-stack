@@ -1,4 +1,4 @@
-import Posts from '../Component/common/Posts';
+import Posts from '../Component/common/posts/Posts';
 import StoriesBar from '../Component/common/StoriesBar'
 
 import { FaInstagram, FaFacebook, FaTelegram, FaGithub } from "react-icons/fa";
@@ -14,8 +14,9 @@ export default function HomePage() {
   return (
     <div dir="rtl" className="min-h-screen bg-base-100 pt-5">
       
-      {/* ===== POSTS ===== */}
+      {/* ===== STORIES BAR ===== */}
       <StoriesBar></StoriesBar>
+      {/* ===== POSTS ===== */}
       <Posts></Posts>
       
       

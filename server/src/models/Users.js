@@ -9,6 +9,12 @@ const UserSchema = new mongoose.Schema({
   name: String,
   age: Number,
   avatar: String,
+  
+  fileId: {
+    type: String,
+    default: "",
+  },
+  
   email: {
     type: String,
     required: true,
@@ -24,7 +30,7 @@ const UserSchema = new mongoose.Schema({
     enum: ['admin', 'user', 'guest'],
     default: 'user',
   }
-}, { timestamps: true });  // ← يضيف createdAt و updatedAt تلقائياً
+}, { timestamps: true });
 
 const UserModel = mongoose.model('User', UserSchema);
 

@@ -12,11 +12,8 @@ const storiesData = [
     userAvatar: "https://ik.imagekit.io/2vom8qfmg/images/profile.jpg",
     isUnread: true,
     stories: [
-      { url: "https://ackbctzmmrrvckpkdvpj.supabase.co/storage/v1/object/sign/vd/VID_20260522_171501_475.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV80ODhkMTlmNC0xMWY4LTQ1NWYtYmRmOS0yYjEzNjMyYTAzYTUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2ZC9WSURfMjAyNjA1MjJfMTcxNTAxXzQ3NS5tcDQiLCJpYXQiOjE3Nzk3MjIxNDQsImV4cCI6MTgxMTI1ODE0NH0.7vCmUqo0FBYFpRiPfA0Afve6RJnRpzm-bI5keJY_j9o",type:'video', duration: 5000 },
-      { url: "https://ackbctzmmrrvckpkdvpj.supabase.co/storage/v1/object/sign/vd/VID_20260519_184747_842.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV80ODhkMTlmNC0xMWY4LTQ1NWYtYmRmOS0yYjEzNjMyYTAzYTUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2ZC9WSURfMjAyNjA1MTlfMTg0NzQ3Xzg0Mi5tcDQiLCJpYXQiOjE3Nzk3MjIxNTgsImV4cCI6MTgxMTI1ODE1OH0.j8w61_rUA6w4htsamZw_apz6ozWNKMWMX7DA66MYByk",type:'video', duration: 4000 },
-      { url: "https://ackbctzmmrrvckpkdvpj.supabase.co/storage/v1/object/sign/vd/UCDownload_temp.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV80ODhkMTlmNC0xMWY4LTQ1NWYtYmRmOS0yYjEzNjMyYTAzYTUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2ZC9VQ0Rvd25sb2FkX3RlbXAubXA0IiwiaWF0IjoxNzc5NzIzNDQwLCJleHAiOjE4MTEyNTk0NDB9.mFDtIqzANN6sH7qJzkbChQNpwUO7gm4nFsif4-8jkYk",type:'video', duration: 4000 },
-      { url: "https://ackbctzmmrrvckpkdvpj.supabase.co/storage/v1/object/sign/vd/4.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV80ODhkMTlmNC0xMWY4LTQ1NWYtYmRmOS0yYjEzNjMyYTAzYTUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2ZC80Lm1wNCIsImlhdCI6MTc3OTcyMzQxMiwiZXhwIjoxODExMjU5NDEyfQ.61X3M9O3rSBMaDtnW9YcbxAgxfzjPHTBDHW8aKs0avE",type:'video', duration: 4000 },
       { url: "https://ackbctzmmrrvckpkdvpj.supabase.co/storage/v1/object/sign/vd/VID_20260404_142517.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV80ODhkMTlmNC0xMWY4LTQ1NWYtYmRmOS0yYjEzNjMyYTAzYTUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2ZC9WSURfMjAyNjA0MDRfMTQyNTE3Lm1wNCIsImlhdCI6MTc3OTcyMzM4NiwiZXhwIjoxODExMjU5Mzg2fQ.tagClfdIROT0bJbPtwhDOnmrbe8SUBSS57nXmAbznvI",type:'video', duration: 4000 },
+      { url: "https://ackbctzmmrrvckpkdvpj.supabase.co/storage/v1/object/sign/vd/VID_20260519_184747_842.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV80ODhkMTlmNC0xMWY4LTQ1NWYtYmRmOS0yYjEzNjMyYTAzYTUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2ZC9WSURfMjAyNjA1MTlfMTg0NzQ3Xzg0Mi5tcDQiLCJpYXQiOjE3Nzk3MjIxNTgsImV4cCI6MTgxMTI1ODE1OH0.j8w61_rUA6w4htsamZw_apz6ozWNKMWMX7DA66MYByk",type:'video', duration: 4000 }
     ]
   },
 ];
@@ -136,7 +133,7 @@ export default function InstagramStoriesBar() {
       
       {/* 3. نافذة العرض المنبثقة (Modal) */}
 {isOpen && activeStories && (
-  <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center select-none touch-none">
+  <div className="fixed inset-0 bg-black/95 z-99 flex items-center justify-center select-none touch-none">
     
     {/* 💡 معلومات المستخدم العائمة (الأفتار + الاسم + شارة التوثيق) */}
     <div 

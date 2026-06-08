@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto'); // مكتبة مدمجة في نود
-const { v4: uuidv4 } = require('uuid'); // تأكد من تثبيتها: npm install uuid
+const { v4: uuidv4 } = require('uuid'); // حزمة توليد المعرفات الفريدة
 
 router.get('/imagekitRoutes', (req, res) => {
   try {

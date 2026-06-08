@@ -1,11 +1,7 @@
 const mongoose = require("mongoose");
 
 const PostSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true,
-  },
-  avatar: {
+  avatar: { // رابط صورة المنشور المرفوعة
     type: String,
     required: false,
   },
@@ -13,11 +9,16 @@ const PostSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  // إضافة الإعجابات كمصفوفة
+  // ربط المنشور بالمستخدِم (مهم لجلب صورته واسمه)
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User', // يجب أن يطابق اسم موديل المستخدمين في قاعدة البيانات
+    required: true
+  },
   likes: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User' // ربطها بمودل المستخدم
+      ref: 'User' 
     }
   ],
   fileId: String,
