@@ -136,7 +136,7 @@ function PostCard({ post, user, onEdit, onDelete }) {
         <div className="p-3">
           <div className="flex items-center justify-between pt-2 border-t border-base-200">
             <div className="flex items-center gap-4">
-              
+              {/* ===== زر الاعجاب ===== */}
               <button 
                 className={`group flex items-center gap-1.5 text-gray-500 hover:text-error transition-all ${isLikeLoading ? 'opacity-70 pointer-events-none' : ''}`} 
                 onClick={handleLikeClick}
@@ -147,7 +147,7 @@ function PostCard({ post, user, onEdit, onDelete }) {
                 </div>
                 <span className="text-sm font-bold">{lnlikes}</span>
               </button>
-
+            {/* ===== زر التعليقات ===== */}
               <button className="group flex items-center gap-1.5 text-gray-500 hover:text-primary transition-all">
                 <div className="p-2 rounded-full group-hover:bg-primary/10"><FaRegComment size={22} /></div>
                 <span className="text-sm font-bold">0</span>

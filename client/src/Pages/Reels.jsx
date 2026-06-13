@@ -1,41 +1,30 @@
 import Loader from "../Component/common/Loader"
+import { useToast } from '../Component/ui/PopUp/ToastContext';
 import { useNavigate } from "react-router-dom";
 import React, { useState, useRef, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-
-// 1️⃣ استيراد الـ Hooks الخاصة بإدارة الكاش من React Query
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-
+import { createClient } from '@supabase/supabase-js'; // ✅ إضافة Supabase
 import {
-  Heart,
-  MessageCircle,
-  Share2,
-  Music2,
-  Play,
-  Volume2,
-  VolumeX,
-  ArrowRight,
-  Trash2,
-  Plus,
-  X
+  Heart, MessageCircle, Share2, Music2, Play,
+  Volume2, VolumeX, ArrowRight, Trash2, Plus, X, Upload
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+// ✅ إنشاء Supabase client
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
+
+// اسم الـ bucket في Supabase Storage
+const BUCKET_NAME = "vd";
+
 // --- المكون الفرعي: فيديو واحد ---
 const ReelItem = ({
-  id,
-  videoUrl,
-  username,
-  description,
-  songName,
-  likes,
-  comments,
-  avatarUrl,
-  isGlobalMuted,
-  toggleMute,
-  onDelete,
-  isAdminUser 
+  id, videoUrl, username, description, songName,
+  likes, comments, avatarUrl, isGlobalMuted, toggleMute, onDelete, isAdminUser
 }) => {
   const [playing, setPlaying] = useState(false);
   const videoRef = useRef(null);
@@ -44,31 +33,23 @@ const ReelItem = ({
     const options = { threshold: 0.7 };
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
-        if (videoRef.current) { 
+        if (videoRef.current) {
           if (entry.isIntersecting) {
             videoRef.current.play().catch(() => {});
             setPlaying(true);
           } else {
-            videoRef.current.pause(); 
+            videoRef.current.pause();
             setPlaying(false);
           }
         }
       });
     }, options);
-
     if (videoRef.current) observer.observe(videoRef.current);
-    
-    return () => {
-      if (videoRef.current) observer.unobserve(videoRef.current);
-    };
+    return () => { if (videoRef.current) observer.unobserve(videoRef.current); };
   }, []);
 
   const togglePlay = () => {
-    if (playing) {
-      videoRef.current.pause();
-    } else {
-      videoRef.current.play();
-    }
+    if (playing) { videoRef.current.pause(); } else { videoRef.current.play(); }
     setPlaying(!playing);
   };
 
@@ -84,7 +65,6 @@ const ReelItem = ({
           playsInline
           muted={isGlobalMuted}
         />
-
         {!playing && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
             <div className="bg-black/30 p-6 rounded-full backdrop-blur-sm">
@@ -92,51 +72,40 @@ const ReelItem = ({
             </div>
           </div>
         )}
-
         <button
           onClick={(e) => { e.stopPropagation(); toggleMute(); }}
           className="absolute bottom-24 left-4 z-40 p-2 bg-black/40 rounded-full text-white backdrop-blur-md hover:bg-black/60 transition-all active:scale-90"
         >
           {isGlobalMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
         </button>
-
-        {/* الأزرار الجانبية */}
         <div className="absolute right-4 bottom-24 flex flex-col gap-6 items-center z-30">
-          
           {isAdminUser && (
-            <button 
+            <button
               onClick={(e) => { e.stopPropagation(); onDelete(id); }}
               className="p-3 bg-red-600/80 hover:bg-red-700 rounded-full text-white backdrop-blur-lg transition-transform active:scale-90 shadow-lg"
-              title="حذف الفيديو"
             >
               <Trash2 size={24} />
             </button>
           )}
-
           <div className="flex flex-col items-center gap-1">
             <button className="p-3 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-lg transition-transform active:scale-90">
               <Heart size={28} className="hover:text-red-500 transition-colors" />
             </button>
             <span className="text-xs text-white font-bold drop-shadow-md">{likes}</span>
           </div>
-
           <div className="flex flex-col items-center gap-1">
             <button className="p-3 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-lg transition-transform active:scale-90">
               <MessageCircle size={28} />
             </button>
             <span className="text-xs text-white font-bold drop-shadow-md">{comments}</span>
           </div>
-
           <button className="p-3 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-lg transition-transform active:scale-90">
             <Share2 size={28} />
           </button>
-
           <div className="w-12 h-12 rounded-full border-2 border-primary overflow-hidden shadow-lg mt-2">
             <img src={avatarUrl || "https://via.placeholder.com/150"} alt="avatar" className="w-full h-full object-cover" />
           </div>
         </div>
-
-        {/* معلومات الفيديو */}
         <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/90 via-black/40 to-transparent text-white z-20" dir="rtl">
           <div className="flex items-center gap-3 mb-3 mr-12">
             <span className="font-bold text-lg drop-shadow-lg">@{username}</span>
@@ -144,9 +113,7 @@ const ReelItem = ({
               متابعة
             </button>
           </div>
-
           <p className="text-sm mb-4 line-clamp-2 drop-shadow-md max-w-[80%] text-right">{description}</p>
-
           <div className="flex items-center gap-2 text-sm bg-black/30 w-fit px-3 py-1 rounded-full backdrop-blur-sm">
             <Music2 size={14} />
             <span className="overflow-hidden whitespace-nowrap max-w-[120px] inline-block">{songName || "صوت أصلي"}</span>
@@ -160,24 +127,24 @@ const ReelItem = ({
 // --- المكون الرئيسي ---
 const Reels = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient(); // محرك التحكم في كاش التطبيق
-  const { user } = useContext(AuthContext); 
-  const isAdminUser = user && user.role === "admin"; 
+  const queryClient = useQueryClient();
+  const { user } = useContext(AuthContext);
+  const isAdminUser = user && user.role === "admin";
 
   const [isGlobalMuted, setIsGlobalMuted] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formLoading, setFormLoading] = useState(false); // لودينج خاص بالفورم فقط
-  
+  const [formLoading, setFormLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0); // ✅ شريط التقدم
+  const [selectedFile, setSelectedFile] = useState(null);  // ✅ الملف المختار
+
   const [newReel, setNewReel] = useState({
-    videoUrl: "",
     username: "",
     description: "",
     songName: ""
   });
 
-  // 2️⃣ جلب الريلز وحفظها في الكاش تلقائياً ببديل ذكي للـ useEffect القديم
   const { data: videoData = [], isLoading } = useQuery({
-    queryKey: ['reels'], // الكاش الفريد لصفحة الريلز
+    queryKey: ['reels'],
     queryFn: async () => {
       const response = await fetch(`${API_URL}/api/reels/`);
       if (!response.ok) throw new Error("فشل جلب الفيديوهات");
@@ -185,27 +152,19 @@ const Reels = () => {
     }
   });
 
-  const toggleMute = () => {
-    setIsGlobalMuted((prev) => !prev);
-  };
+  const toggleMute = () => setIsGlobalMuted((prev) => !prev);
 
-  // دالة الحذف الذكية مع تعديل الكاش فوراً
   const handleDeleteReel = async (id) => {
     if (!isAdminUser) return;
-
     if (window.confirm("هل أنت متأكد من حذف هذا الريل نهائياً؟")) {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch(`${API_URL}/api/reels/${id}`, { 
+        const response = await fetch(`${API_URL}/api/reels/${id}`, {
           method: "DELETE",
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
+          headers: { "Authorization": `Bearer ${token}` }
         });
-        
         if (response.ok) {
-          // مسح الفيديو من الكاش فوراً ليختفي من الشاشة بدون ريفريش
-          queryClient.setQueryData(['reels'], (oldReels = []) => 
+          queryClient.setQueryData(['reels'], (oldReels = []) =>
             oldReels.filter((video) => video._id !== id)
           );
         }
@@ -214,136 +173,208 @@ const Reels = () => {
       }
     }
   };
-
-  // دالة الإضافة الذكية
+const showToast = useToast();
+  // ✅ دالة رفع الفيديو إلى Supabase ثم الحفظ في الـ backend
   const handleCreateReel = async (e) => {
     e.preventDefault();
-    if (!isAdminUser) return;
-
-    if (!newReel.videoUrl || !newReel.username) {
-      alert("يرجى ملء كافة الحقول الإلزامية!");
+    if (!isAdminUser || !selectedFile || !newReel.username) {
+      showToast("يرجى اختيار فيديو وإدخال اسم المستخدم!","error");
       return;
     }
 
     setFormLoading(true);
+    setUploadProgress(10);
+
     try {
+      // 1️⃣ رفع الفيديو إلى Supabase Storage
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `reel_${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .upload(fileName, selectedFile, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: selectedFile.type,
+        });
+
+      if (uploadError) throw new Error(`فشل رفع الفيديو: ${uploadError.message}`);
+
+      setUploadProgress(70);
+
+      // 2️⃣ الحصول على الـ Public URL
+      const { data: urlData } = supabase.storage
+        .from(BUCKET_NAME)
+        .getPublicUrl(fileName);
+
+      const videoUrl = urlData.publicUrl;
+      setUploadProgress(85);
+
+      // 3️⃣ حفظ البيانات في الـ backend
       const token = localStorage.getItem("token");
       const response = await fetch(`${API_URL}/api/reels/`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify(newReel)
+        body: JSON.stringify({ ...newReel, videoUrl })
       });
 
       if (response.ok) {
         const savedData = await response.json();
-        
-        // 🟢 إضافة الفيديو الجديد لأول الكاش فوراً ليظهر مباشرةً
         queryClient.setQueryData(['reels'], (oldReels = []) => [savedData, ...oldReels]);
-        
+        setUploadProgress(100);
+
+        // إعادة تعيين الفورم
         setIsModalOpen(false);
-        setNewReel({ videoUrl: "", username: "", description: "", songName: "" });
-        alert("تم نشر الفيديو بنجاح! 🎉");
-        
-        // تحديث ومزامنة صامتة بالخلفية مع السيرفر
+        setSelectedFile(null);
+        setNewReel({ username: "", description: "", songName: "" });
+        setUploadProgress(0);
         queryClient.invalidateQueries(['reels']);
+        showToast("تم نشر الفيديو بنجاح! ","success");
+      } else {
+        throw new Error("فشل حفظ البيانات في السيرفر");
       }
     } catch (error) {
-      console.error("Error creating reel:", error);
+      console.error("Error:", error);
+      showToast(`حدث خطأ: ${error.message}`,"error");
+      setUploadProgress(0);
     } finally {
       setFormLoading(false);
     }
   };
 
-  // الـ Loader الأصلي يظهر مرة واحدة فقط في تاريخ فتح الصفحة
-  if (isLoading && videoData.length === 0) {
-    return <Loader />;
-  }
+  if (isLoading && videoData.length === 0) return <Loader />;
 
   return (
     <div className="relative h-screen w-full overflow-y-scroll snap-y snap-mandatory bg-black no-scrollbar scroll-smooth">
-      
-      {/* زر الرجوع */}
-      <button 
-        onClick={() => navigate("/")} 
+
+      <button
+        onClick={() => navigate("/")}
         className="fixed top-6 right-6 z-50 p-3 bg-black/40 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-black/60 transition-all active:scale-90 shadow-2xl"
       >
         <ArrowRight size={24} />
       </button>
 
-      {/* زر الرفع (+) للـ Admin */}
       {isAdminUser && (
-        <button 
-          onClick={() => setIsModalOpen(true)} 
-          className="fixed top-6 left-6 z-50 p-3 bg-blue-600 hover:bg-blue-700 rounded-full text-white transition-all active:scale-90 shadow-2xl flex items-center justify-center"
-          title="إضافة فيديو جديد"
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="fixed top-6 left-6 z-50 p-3 bg-blue-600 hover:bg-blue-700 rounded-full text-white transition-all active:scale-90 shadow-2xl"
         >
           <Plus size={24} />
         </button>
       )}
 
-      {/* نافذة الرفع المنبثقة للأدمن */}
+      {/* ✅ المودال المعدّل مع رفع ملف */}
       {isAdminUser && isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4">
           <div className="bg-neutral-900 border border-white/10 text-white w-full max-w-md p-6 rounded-2xl relative shadow-2xl" dir="rtl">
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-4 left-4 p-1 text-gray-400 hover:text-white rounded-full bg-white/5" disabled={formLoading}>
+            <button
+              onClick={() => { if (!formLoading) { setIsModalOpen(false); setSelectedFile(null); setUploadProgress(0); } }}
+              className="absolute top-4 left-4 p-1 text-gray-400 hover:text-white rounded-full bg-white/5"
+              disabled={formLoading}
+            >
               <X size={20} />
             </button>
-            <h3 className="text-xl font-bold mb-4 text-center border-b border-white/10 pb-2">إضافة ريل (Reel) جديد</h3>
+
+            <h3 className="text-xl font-bold mb-4 text-center border-b border-white/10 pb-2">إضافة ريل جديد</h3>
+
             <form onSubmit={handleCreateReel} className="flex flex-col gap-4">
+
+              {/* ✅ منطقة رفع الفيديو */}
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">ملف الفيديو *</label>
+                <label className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-xl cursor-pointer transition-all
+                  ${selectedFile ? 'border-blue-500 bg-blue-500/10' : 'border-white/20 bg-black/30 hover:border-white/40'}`}
+                >
+                  <input
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    disabled={formLoading}
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) setSelectedFile(file);
+                    }}
+                  />
+                  {selectedFile ? (
+                    <div className="text-center px-3">
+                      <Upload size={20} className="mx-auto mb-1 text-blue-400" />
+                      <p className="text-xs text-blue-300 font-medium truncate max-w-[200px]">{selectedFile.name}</p>
+                      <p className="text-xs text-gray-500 mt-1">{(selectedFile.size / (1024 * 1024)).toFixed(1)} MB</p>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <Upload size={24} className="mx-auto mb-2 text-gray-500" />
+                      <p className="text-xs text-gray-400">اضغط لاختيار فيديو</p>
+                      <p className="text-xs text-gray-600 mt-1">MP4, MOV, WebM</p>
+                    </div>
+                  )}
+                </label>
+              </div>
+
+              {/* ✅ شريط التقدم */}
+              {uploadProgress > 0 && (
+                <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              )}
+
               <div>
                 <label className="text-xs text-gray-400 block mb-1">اسم المستخدم *</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="w-full bg-black/40 border border-white/10 p-2.5 rounded-xl text-sm text-right focus:outline-none focus:border-blue-500"
                   value={newReel.username}
-                  onChange={(e) => setNewReel({...newReel, username: e.target.value})}
+                  onChange={(e) => setNewReel({ ...newReel, username: e.target.value })}
                   required
                   disabled={formLoading}
                 />
               </div>
-              <div>
-                <label className="text-xs text-gray-400 block mb-1">رابط الفيديو *</label>
-                <input 
-                  type="url" 
-                  className="w-full bg-black/40 border border-white/10 p-2.5 rounded-xl text-sm text-left focus:outline-none focus:border-blue-500"
-                  value={newReel.videoUrl}
-                  onChange={(e) => setNewReel({...newReel, videoUrl: e.target.value})}
-                  required
-                  disabled={formLoading}
-                />
-              </div>
+
               <div>
                 <label className="text-xs text-gray-400 block mb-1">وصف الفيديو</label>
-                <textarea 
+                <textarea
                   rows="2"
                   className="w-full bg-black/40 border border-white/10 p-2.5 rounded-xl text-sm text-right resize-none focus:outline-none focus:border-blue-500"
                   value={newReel.description}
-                  onChange={(e) => setNewReel({...newReel, description: e.target.value})}
+                  onChange={(e) => setNewReel({ ...newReel, description: e.target.value })}
                   disabled={formLoading}
                 />
               </div>
+
               <div>
                 <label className="text-xs text-gray-400 block mb-1">اسم الصوت</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="w-full bg-black/40 border border-white/10 p-2.5 rounded-xl text-sm text-right focus:outline-none focus:border-blue-500"
                   value={newReel.songName}
-                  onChange={(e) => setNewReel({...newReel, songName: e.target.value})}
+                  onChange={(e) => setNewReel({ ...newReel, songName: e.target.value })}
                   disabled={formLoading}
                 />
               </div>
-              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl font-bold mt-2 flex justify-center items-center" disabled={formLoading}>
-                {formLoading ? "جاري النشر..." : "نشر الفيديو الآن 🚀"}
+
+              <button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white p-3 rounded-xl font-bold mt-2 flex justify-center items-center gap-2"
+                disabled={formLoading || !selectedFile}
+              >
+                {formLoading ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    جاري الرفع... {uploadProgress}%
+                  </>
+                ) : "نشر الفيديو الآن 🚀"}
               </button>
             </form>
           </div>
         </div>
       )}
 
-      {/* عرض الفيديوهات */}
       {videoData.length === 0 ? (
         <div className="h-screen w-full flex items-center justify-center text-gray-400">
           لا توجد فيديوهات حالياً.
