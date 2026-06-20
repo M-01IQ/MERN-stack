@@ -1,219 +1,336 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import StoriesComponent from 'react-insta-stories';
+import { FaPlus, FaRegImage, FaTrash } from 'react-icons/fa';
+import API from '../../api/axiosInstance'; 
+import { AuthContext } from '../../context/AuthContext';
+import { createClient } from '@supabase/supabase-js';
 
-// حل مشكلة التوافقية مع بيئات البناء الحديثة مثل Vite
 const Stories = StoriesComponent.default || StoriesComponent;
 
-// بيانات تجريبية للستوريات
-const storiesData = [
-  {
-    id: 1,
-    username: "𝙼𝚄𝚂𝚃𝙰𝙵𝙰",
-    userAvatar: "https://ik.imagekit.io/2vom8qfmg/images/profile.jpg",
-    isUnread: true,
-    stories: [
-      { url: "https://ackbctzmmrrvckpkdvpj.supabase.co/storage/v1/object/sign/vd/VID_20260404_142517.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV80ODhkMTlmNC0xMWY4LTQ1NWYtYmRmOS0yYjEzNjMyYTAzYTUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2ZC9WSURfMjAyNjA0MDRfMTQyNTE3Lm1wNCIsImlhdCI6MTc3OTcyMzM4NiwiZXhwIjoxODExMjU5Mzg2fQ.tagClfdIROT0bJbPtwhDOnmrbe8SUBSS57nXmAbznvI",type:'video', duration: 4000 },
-      { url: "https://ackbctzmmrrvckpkdvpj.supabase.co/storage/v1/object/sign/vd/VID_20260519_184747_842.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV80ODhkMTlmNC0xMWY4LTQ1NWYtYmRmOS0yYjEzNjMyYTAzYTUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2ZC9WSURfMjAyNjA1MTlfMTg0NzQ3Xzg0Mi5tcDQiLCJpYXQiOjE3Nzk3MjIxNTgsImV4cCI6MTgxMTI1ODE1OH0.j8w61_rUA6w4htsamZw_apz6ozWNKMWMX7DA66MYByk",type:'video', duration: 4000 }
-    ]
-  },
-];
+// 🟢 القراءة التلقائية والآمنة من ملف الـ env الخاص بـ Vite
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export default function InstagramStoriesBar() {
-  const currentUser = {
-    username: "قصتك",
-    avatar: "https://ik.imagekit.io/2vom8qfmg/images/DefaultUser.jpg?updatedAt=1779202542905"
+  // ... بقية كود المكون كاملاً كما هو دون أي تغيير
+
+  const { user } = useContext(AuthContext);
+
+  const [allStories, setAllStories] = useState([]);
+  const fileInputRef = useRef(null);
+  const [uploadPreview, setUploadPreview] = useState(null);
+  const [uploadType, setUploadType] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false); 
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeStories, setActiveStories] = useState(null);
+  const [currentViewedUser, setCurrentViewedUser] = useState(null);
+  const [currentIndex, setCurrentIndex] = useState(0); 
+
+  const fetchStories = async () => {
+    try {
+      const res = await API.get('/stories');
+      setAllStories(res.data); 
+    } catch (err) {
+      console.error("خطأ في جلب الستوريات من الباكيند:", err);
+    }
   };
 
-  const currentUserStories = [
-    { url: "https://picsum.photos/1080/1920?random=10", duration: 4000 }
-  ];
+  useEffect(() => {
+    fetchStories();
+  }, []);
 
-  const [activeStories, setActiveStories] = useState(null);
-  const [isOpen, setIsOpen] = useState(false);
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  // دالة فتح الستوري
-  const handleOpenStories = (storiesArray) => {
+    setSelectedFile(file);
+    const fileType = file.type.startsWith('video') ? 'video' : 'image';
+    setUploadPreview(URL.createObjectURL(file));
+    setUploadType(fileType);
+  };
+
+  // 🔄 دالة الرفع الذكية (فيديو -> Supabase | صورة -> ImageKit)
+  const handlePublishStory = async () => {
+    if (!selectedFile) return;
+
+    if (!user) {
+      alert("عذراً، يجب تسجيل الدخول أولاً لتتمكن من نشر قصة.");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      let finalMediaUrl = "";
+      let finalFileId = "";
+
+      if (uploadType === "video") {
+        // 🟢 [أولاً] رفع الفيديو إلى Supabase Storage
+        const bucketName = 'vd'; 
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `story_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `stories/${fileName}`;
+
+        const { data, error } = await supabase.storage
+          .from(bucketName)
+          .upload(filePath, selectedFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (error) throw error;
+
+        // الحصول على الرابط العام للفيديو المرفوع
+        const { data: publicUrlData } = supabase.storage
+          .from(bucketName)
+          .getPublicUrl(filePath);
+
+        finalMediaUrl = publicUrlData.publicUrl;
+        finalFileId = data.path; // استخدام المسار كمعرف للملف
+
+      } else {
+        // 🔵 [ثانياً] رفع الصورة إلى ImageKit
+        const authRes = await API.get('/imagekitRoutes');
+        const authData = authRes.data;
+
+        const uploadData = new FormData();
+        uploadData.append("file", selectedFile);
+        uploadData.append("fileName", selectedFile.name);
+        uploadData.append("folder", "/stories"); 
+        uploadData.append("publicKey", "public_8blKLRTsq6BkdVQ5OMD+OGPzNSM=");
+        uploadData.append("signature", authData.signature);
+        uploadData.append("expire", authData.expire.toString());
+        uploadData.append("token", authData.token);
+
+        const imgResponse = await fetch('https://upload.imagekit.io/api/v1/files/upload', { 
+          method: 'POST', 
+          body: uploadData 
+        });
+        const imgResult = await imgResponse.json();
+        if (!imgResponse.ok) throw new Error("فشل رفع الميديا إلى ImageKit");
+
+        finalMediaUrl = imgResult.url;
+        finalFileId = imgResult.fileId;
+      }
+
+      // إرسال البيانات المجمعة لحفظها بقاعدة البيانات بقالب موحد
+      await API.post('/newstory', {
+        url: finalMediaUrl,
+        mediaType: uploadType,
+        fileId: finalFileId,
+        duration: uploadType === 'video' ? 6000 : 4000,
+        userId: user.id || user._id 
+      });
+
+      setUploadPreview(null);
+      setSelectedFile(null);
+      fetchStories(); 
+    } catch (err) {
+      alert(err.message || "حدث خطأ أثناء نشر الستوري");
+    } {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDeleteStory = async () => {
+    const currentStory = activeStories[currentIndex];
+    if (!currentStory || !currentStory._id) return;
+
+    if (!window.confirm("هل أنت متأكد من رغبتك في حذف هذه الستوري؟")) return;
+
+    setIsDeleting(true);
+    try {
+      await API.delete(`/stories/${currentStory._id}`);
+      const updatedActive = activeStories.filter((_, idx) => idx !== currentIndex);
+      
+      handleCloseStories();
+      await fetchStories(); 
+
+      if (updatedActive.length > 0) {
+        setTimeout(() => {
+          const nextIndex = currentIndex >= updatedActive.length ? updatedActive.length - 1 : currentIndex;
+          setActiveStories(updatedActive);
+          setCurrentIndex(nextIndex);
+          setIsOpen(true);
+        }, 300);
+      }
+    } catch (err) {
+      alert(err.response?.data?.error || "حدث خطأ أثناء حذف الستوري");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleOpenStories = (storiesArray, userDetails) => {
     if (!storiesArray || storiesArray.length === 0) return;
-    setActiveStories(storiesArray);
+    
+    const formattedStories = storiesArray.map(s => ({
+      _id: s._id,
+      url: s.url,
+      type: s.mediaType,
+      duration: s.duration,
+      ownerId: userDetails.ownerId
+    }));
+    
+    setCurrentIndex(0);
+    setActiveStories(formattedStories);
+    setCurrentViewedUser(userDetails);
     setIsOpen(true);
   };
 
-  // دالة إغلاق الستوري وإدارة الـ History
   const handleCloseStories = () => {
     setIsOpen(false);
     setActiveStories(null);
-    // تنظيف تاريخ المتصفح إذا أغلق المستخدم الستوري يدوياً
+    setCurrentViewedUser(null);
+    setCurrentIndex(0);
     if (window.history.state?.storiesOpen) {
       window.history.back();
     }
   };
 
-  // تأثير التعامل مع زر الرجوع في الهاتف الفعلي
   useEffect(() => {
     if (isOpen) {
-      // دفع حالة وهمية لتاريخ المتصفح لمنع الخروج من الموقع
       window.history.pushState({ storiesOpen: true }, "");
-
       const handlePopState = () => {
-        // عند ضغط زر الرجوع بالهاتف، نغلق الستوري فقط
         setIsOpen(false);
         setActiveStories(null);
+        setCurrentViewedUser(null);
+        setCurrentIndex(0);
       };
-
       window.addEventListener("popstate", handlePopState);
-
-      return () => {
-        window.removeEventListener("popstate", handlePopState);
-      };
+      return () => window.removeEventListener("popstate", handlePopState);
     }
   }, [isOpen]);
 
+  const myStoriesGroup = allStories.find(item => item._id === user?.id || item._id === user?._id);
+  const otherUsersStories = allStories.filter(item => item._id !== user?.id && item._id !== user?._id);
+
+  const isOwnStoryActive = activeStories && activeStories[currentIndex] && 
+    (activeStories[currentIndex].ownerId === user?.id || activeStories[currentIndex].ownerId === user?._id);
+
   return (
-    <div className="w-full bg-base-100 p-0 border-b border-base-200 transition-colors duration-300">
-      
-      {/* شريط الستوريات الأفقي باتجاه RTL */}
-      <div dir="rtl" className="flex overflow-x-auto scrollbar-hide px-2 gap-4 pt-2 pb-2">
-        
-        {/* 1. ستوري المستخدم الحالي */}
-        <div 
-          onClick={() => handleOpenStories(currentUserStories)}
-          className="flex flex-col items-center flex-shrink-0 cursor-pointer group select-none"
-        >
-          <div className="relative">
-            <div className="avatar placeholder">
-              <div className="w-16 h-16 md:w-18 md:h-18 rounded-full ring ring-base-300 ring-offset-base-100 ring-offset-2">
-                <img 
-                  src={currentUser.avatar} 
-                  alt="My Story" 
-                  className="rounded-full object-cover"
-                />
+    <div className="w-full bg-base-100 p-0 border-b border-base-200 select-none">
+      <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*,video/*" className="hidden" />
+
+      <div dir="rtl" className="flex overflow-x-auto scrollbar-hide px-2 gap-4 pt-2 pb-2 items-center">
+        {user && (
+          <div className="flex flex-col items-center flex-shrink-0 relative">
+            <div 
+              onClick={() => myStoriesGroup ? handleOpenStories(myStoriesGroup.stories, { username: "قصتك", avatar: user?.avatar || user?.profileImage, ownerId: user?.id || user?._id }) : fileInputRef.current.click()}
+              className="relative cursor-pointer"
+            >
+              <div className="avatar">
+                <div className={`w-16 h-16 rounded-full ${myStoriesGroup ? 'ring-2 ring-primary ring-offset-2' : 'ring ring-base-300'}`}>
+                  <img src={user?.avatar || user?.profileImage || "https://ik.imagekit.io/2vom8qfmg/images/DefaultUser.jpg"} alt="My Profile" className="rounded-full object-cover" />
+                </div>
               </div>
+              {!myStoriesGroup && (
+                <div className="absolute bottom-0 left-0 bg-primary text-primary-content p-0.5 rounded-full border-2 border-base-100 flex items-center justify-center -translate-x-1 translate-y-1">
+                  <FaPlus className="w-3 h-3" />
+                </div>
+              )}
             </div>
-            
-            <div className="absolute bottom-0 left-0 bg-primary text-primary-content p-0.5 rounded-full border-2 border-base-100 flex items-center justify-center shadow-md z-10 -translate-x-1 translate-y-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-              </svg>
-            </div>
+            <span className="text-xs text-base-content/70 mt-2 w-16 truncate text-center font-medium">قصتك</span>
           </div>
+        )}
 
-          <span className="text-xs text-base-content/70 mt-2 w-16 truncate text-center font-medium">
-            {currentUser.username}
-          </span>
-        </div>
+        {user && myStoriesGroup && (
+          <div onClick={() => fileInputRef.current.click()} className="flex flex-col items-center flex-shrink-0 cursor-pointer text-base-content/50 hover:text-primary transition">
+            <div className="w-16 h-16 rounded-full border-2 border-dashed border-base-300 flex items-center justify-center bg-base-200">
+              <FaRegImage size={20} />
+            </div>
+            <span className="text-[11px] mt-2 font-medium">إضافة جديد</span>
+          </div>
+        )}
 
-        {/* 2. عرض ستوريات الأصدقاء */}
-        {storiesData.map((story) => (
+        {user && <div className="w-[1px] h-12 bg-base-300 flex-shrink-0" />}
+
+        {otherUsersStories.map((group) => (
           <div 
-            key={story.id} 
-            onClick={() => handleOpenStories(story.stories)}
-            className="flex flex-col items-center flex-shrink-0 cursor-pointer active:scale-95 transition duration-150 select-none"
+            key={group._id} 
+            onClick={() => handleOpenStories(group.stories, { username: group.userId?.username, avatar: group.userId?.avatar || group.userId?.profileImage, role: group.userId?.role, ownerId: group._id })}
+            className="flex flex-col items-center flex-shrink-0 cursor-pointer"
           >
             <div className="avatar">
-              <div className={`w-16 h-16 md:w-18 md:h-18 rounded-full p-[2.5px] ${
-                story.isUnread 
-                  ? 'bg-gradient-to-tr from-yellow-500 via-red-500 to-purple-600 p-[3px]' 
-                  : 'ring ring-base-300 ring-offset-base-100 ring-offset-2'
-              }`}>
-                <div className={`w-full h-full rounded-full ${story.isUnread ? 'bg-base-100 p-[2px]' : ''}`}>
-                  <img 
-                    src={story.userAvatar} 
-                    alt={story.username} 
-                    className="rounded-full object-cover w-full h-full"
-                  />
+              <div className="w-16 h-16 rounded-full p-[3px] bg-gradient-to-tr from-yellow-500 via-red-500 to-purple-600">
+                <div className="w-full h-full rounded-full bg-base-100 p-[2px]">
+                  <img src={group.userId?.avatar || group.userId?.profileImage || "https://ik.imagekit.io/2vom8qfmg/images/DefaultUser.jpg"} alt={group.userId?.username} className="rounded-full object-cover w-full h-full" />
                 </div>
               </div>
             </div>
-            <span className="text-xs text-base-content mt-2 w-16 truncate text-center font-medium">
-              {story.username}
-            </span>
+            <span className="text-xs text-base-content mt-2 w-16 truncate text-center font-medium">{group.userId?.username}</span>
           </div>
         ))}
       </div>
+
+      {uploadPreview && (
+        <div className="fixed inset-0 bg-black/90 z-[10000] flex flex-col items-center justify-center p-4">
+          <div className="w-full max-w-[380px] bg-neutral text-neutral-content rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-4 text-center border-b border-white/10 font-bold text-white">مراجعة الستوري قبل النشر</div>
+            <div className="w-full aspect-[9/16] bg-black flex items-center justify-center">
+              {uploadType === 'video' ? (
+                <video src={uploadPreview} className="w-full h-full object-contain" autoPlay loop muted />
+              ) : (
+                <img src={uploadPreview} alt="Preview" className="w-full h-full object-contain" />
+              )}
+            </div>
+            <div className="p-3 flex gap-3 bg-black/40">
+              <button onClick={handlePublishStory} disabled={isUploading} className="btn btn-primary flex-1 text-white font-bold rounded-xl">
+                {isUploading ? "جاري النشر..." : "نشر الآن"}
+              </button>
+              <button onClick={() => { setUploadPreview(null); setSelectedFile(null); }} disabled={isUploading} className="btn btn-ghost border border-white/20 text-white flex-1 rounded-xl">إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
       
-      {/* 3. نافذة العرض المنبثقة (Modal) */}
-{isOpen && activeStories && (
-  <div className="fixed inset-0 bg-black/95 z-99 flex items-center justify-center select-none touch-none">
-    
-    {/* 💡 معلومات المستخدم العائمة (الأفتار + الاسم + شارة التوثيق) */}
-    <div 
-      className="absolute top-4 right-4 flex items-center gap-2.5 bg-gradient-to-b from-black/60 to-transparent p-3 rounded-bl-xl pointer-events-none"
-      style={{ zIndex: 9999 }} 
-      dir="rtl" // لترتيب الأفتار ثم الاسم من اليمين لليسار
-    >
-      {/* 1. أفتار المستخدم المصغر */}
-      <div className="avatar">
-        <div className="w-9 h-9 rounded-full ring-1 ring-white/40">
-          <img 
-            src="https://ik.imagekit.io/2vom8qfmg/images/profile.jpg" 
-            alt="User Avatar" 
-            className="object-cover rounded-full"
-          />
+      {isOpen && activeStories && currentViewedUser && (
+        <div className="fixed inset-0 bg-black/95 z-99 flex items-center justify-center touch-none">
+          <div className="absolute top-4 right-4 flex items-center gap-2.5 p-3" style={{ zIndex: 9999 }} dir="rtl">
+            <div className="avatar">
+              <div className="w-9 h-9 rounded-full ring-1 ring-white/40">
+                <img src={currentViewedUser.avatar || "https://ik.imagekit.io/2vom8qfmg/images/DefaultUser.jpg"} alt="User Avatar" className="object-cover rounded-full w-full h-full" />
+              </div>
+            </div>
+            <div className="flex flex-col gap-0.5 text-right">
+              <h3 className="text-sm font-bold text-white leading-none">{currentViewedUser.username}</h3>
+            </div>
+          </div>
+
+          <div className="absolute top-4 left-4 flex items-center gap-2" style={{ zIndex: 9999 }}>
+            {isOwnStoryActive && (
+              <button 
+                onClick={handleDeleteStory} 
+                disabled={isDeleting}
+                className="text-red-500 hover:text-red-400 text-lg p-3 rounded-full bg-black/40 btn-circle flex items-center justify-center border-none"
+                title="حذف هذه الستوري"
+              >
+                <FaTrash size={16} className={isDeleting ? "animate-pulse" : ""} />
+              </button>
+            )}
+            <button onClick={handleCloseStories} className="text-white text-xl p-3 rounded-full bg-black/40 w-10 h-10 flex items-center justify-center">✕</button>
+          </div>
+
+          <div className="w-full max-w-[420px] h-full max-h-[85vh] md:rounded-lg overflow-hidden relative">
+            <Stories 
+              stories={activeStories} 
+              defaultInterval={4000} 
+              width="100%" 
+              height="100%" 
+              storyStyles={{ objectFit: 'cover' }} 
+              progressContainerStyles={{ direction: 'rtl', marginTop: '55px' }} 
+              progressWrapperStyles={{ direction: 'rtl' }} 
+              progressStyles={{ transformOrigin: 'right center' }} 
+              onStoryStart={(index) => setCurrentIndex(index)} 
+              onAllStoriesEnd={handleCloseStories} 
+            />
+          </div>
         </div>
-      </div>
-
-      {/* 2. النصوص (الاسم + الرتبة) */}
-      <div className="flex flex-col gap-0.5 text-right">
-        {/* الاسم مع علامة التوثيق */}
-        <div className="flex items-center gap-1.5 justify-start">
-          {/* لون النص أبيض ثابت لأن خلفية الستوري سوداء دائماً */}
-          <h3 className="text-sm md:text-base font-bold text-white leading-none">𝙼𝚄𝚂𝚃𝙰𝙵𝙰</h3>
-          
-          {/* أيقونة التوثيق */}
-          <svg 
-            className="w-[14px] h-[14px] md:w-[16px] md:h-[16px] text-[#1d9bf0] fill-current flex-shrink-0" 
-            viewBox="0 0 24 24" 
-            aria-label="Verified account"
-          >
-            <g>
-              <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.99-3.818-3.99-.48 0-.94.1-1.348.27C14.825 2.515 13.512 1.5 12 1.5s-2.825 1.015-3.422 2.28c-.406-.17-.866-.27-1.348-.27-2.108 0-3.818 1.78-3.818 3.99 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.58.875 2.95 2.148 3.6-.154.435-.238.905-.238 1.4 0 2.21 1.71 3.99 3.818 3.99.48 0 .94-.1 1.348-.27.597 1.265 1.91 2.28 3.422 2.28s2.825-1.015 3.422-2.28c.406.17.866.27 1.348.27 2.108 0 3.818-1.78 3.818-3.99 0-.495-.084-.965-.238-1.4 1.273-.65 2.148-2.02 2.148-3.6zm-12.5 4l-4.25-4.25 1.4-1.4 2.85 2.85 6.65-6.65 1.4 1.4-8.05 8.05z"></path>
-            </g>
-          </svg>
-        </div>
-        
-        {/* user/admin */}
-        <span className="text-[10px] md:text-xs text-white/60 font-medium tracking-wide">admin</span>
-      </div>
-    </div>
-
-    {/* زر الإغلاق العلوي جهة اليسار */}
-    <button 
-      onClick={(e) => {
-        e.stopPropagation();
-        handleCloseStories();
-      }}
-      className="absolute top-4 left-4 text-white text-2xl font-bold p-3 rounded-full bg-black/40 hover:bg-black/60 transition"
-      style={{ zIndex: 9999 }}
-    >
-      ✕
-    </button>
-
-    {/* حاوية الستوري */}
-    <div className="w-full max-w-[420px] h-full max-h-[85vh] md:rounded-lg overflow-hidden relative">
-      <Stories
-        stories={activeStories}
-        defaultInterval={4000}
-        width="100%"
-        height="100%"
-        storyStyles={{ objectFit: 'cover' }}
-        
-        progressContainerStyles={{
-          direction: 'rtl',
-          marginTop: '55px' // زيادة المسافة لكي لا يغطي شريط التقدم على الأفتار والاسم
-        }}
-        progressWrapperStyles={{
-          direction: 'rtl',
-        }}
-        progressStyles={{
-          transformOrigin: 'right center',
-        }}
-
-        onAllStoriesEnd={handleCloseStories}
-      />
-    </div>
-  </div>
-)}
-
+      )}
     </div>
   );
 }

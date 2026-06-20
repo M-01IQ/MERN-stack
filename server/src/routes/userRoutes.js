@@ -3,7 +3,7 @@ const router = express.Router();
 const UserModule = require("../models/Users");
 const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const ImageKit = require("imagekit"); // استيراد حزمة ImageKit الحذف
+const ImageKit = require("imagekit");
 const JWT_SECRET = process.env.JWT_SECRET;
 const { verifyToken, isAdmin } = require("../middleware/authMiddleware");
 
@@ -58,9 +58,13 @@ router.post("/register", async (req, res) => {
     return res.status(200).json({ 
       message: "تم إنشاء الحساب بنجاح",
       token: token,
+      _id: savedUser._id, // تأمين الـ id للتحديث الفوري للكاش
       userID: savedUser._id,
       username: savedUser.username,
-      role: savedUser.role
+      email: savedUser.email,
+      age: savedUser.age,
+      role: savedUser.role,
+      avatar: savedUser.avatar || ""
     });
     
   } catch (err) {
@@ -95,6 +99,7 @@ router.post("/login", async (req, res) => {
       email: user.email,
       age: user.age,
       role: user.role,
+      avatar: user.avatar,
       message: "تم تسجيل الدخول بنجاح!"
     });
   } catch (error) {
@@ -136,7 +141,6 @@ router.put("/UpdateUser/:id", async (req, res) => {
         await imagekit.deleteFile(currentUser.fileId);
         console.log(`تم بنجاح إزالة الصورة السابقة ذات المعرف: ${currentUser.fileId}`);
       } catch (ikError) {
-        //اذا فشل حذف الصورة 
         console.error("فشل حذف الصورة من خوادم ImageKit:", ikError.message);
       }
     }

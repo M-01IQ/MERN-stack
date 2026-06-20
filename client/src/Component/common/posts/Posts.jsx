@@ -1,13 +1,11 @@
+import React, { useState, useEffect, useContext } from "react";
 import { io } from "socket.io-client";
-import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../../context/AuthContext";
 import { useToast } from '../../ui/PopUp/ToastContext';
 import { useConfirm } from "../../ui/PopUp/ConfirmContext";
 import Loader from "../../common/Loader";
-import API from "../../../api/axiosInstance"; 
+import API from '../../../api/axiosInstance'; 
 import { FaSearch, FaPlus } from 'react-icons/fa';
-
-// 🟢 استيراد الـ Hooks الخاصة بإدارة الكاش
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import PostCard from "./PostCard";
@@ -23,27 +21,30 @@ function Posts() {
   const { user } = useContext(AuthContext);
   const askConfirm = useConfirm();
   const showToast = useToast();
-  const queryClient = useQueryClient(); // 🟢 محرك التحكم في كاش التطبيق
+  const queryClient = useQueryClient();
   
   const [searchTerm, setSearchTerm] = useState("");
   const [editId, setEditId] = useState(null);
-  const [formLoading, setFormLoading] = useState(false); // لودينج خاص بأزرار الفورم فقط
+  const [formLoading, setFormLoading] = useState(false);
   const [preview, setPreview] = useState(null); 
   const [file, setFile] = useState(null);
-  const [formData, setFormData] = useState({avatar: "", text: "", fileId: "" });
+  const [formData, setFormData] = useState({ avatar: "", text: "", fileId: "" });
 
-  // 🟢 جلب المنشورات وحفظها في الكاش تلقائياً (تستبدل fetchPosts بالكامل)
+  // 🔊 إدارة الصوت والتشغيل المتزامن للفيديوهات بشكل مركزي
+  const [isAllMuted, setIsAllMuted] = useState(true); 
+  const [activePostId, setActivePostId] = useState(null); 
+
+  // جلب المنشورات وحفظها في الـ Cache تلقائياً
   const { data: posts = [], isLoading } = useQuery({
-    queryKey: ['posts'], // المعرف الفريد لكاش المنشورات
+    queryKey: ['posts'],
     queryFn: async () => {
       const res = await API.get("/posts");
       return res.data;
     }
   });
 
-  // الجلب والتحديث الفوري عبر socket.io بالتزامن مع الكاش العالمي
+  // التحديث الفوري عبر WebSockets بالتزامن مع الـ Cache
   useEffect(() => {
-    // الاستماع للمنشورات الجديدة وتحديث الكاش فوراً
     socket.on("newPost", (newPostFromServer) => {
       queryClient.setQueryData(['posts'], (oldPosts = []) => {
         if (oldPosts.some(p => p._id === newPostFromServer._id)) return oldPosts;
@@ -51,21 +52,18 @@ function Posts() {
       });
     });
 
-    // الاستماع لحذف المنشورات وتحديث الكاش فوراً
     socket.on("post_deleted", (deletedId) => {
       queryClient.setQueryData(['posts'], (oldPosts = []) => 
         oldPosts.filter(post => post._id !== deletedId)
       );
     });
 
-    // الاستماع لتحديث اللايكات وتحديث الكاش فوراً
     socket.on("post_likes_updated", ({ postId, likes }) => {
       queryClient.setQueryData(['posts'], (oldPosts = []) => 
         oldPosts.map(p => p._id === postId ? { ...p, likes: likes } : p)
       );
     });
 
-    // الاستماع لتعديل المنشورات وتحديث الكاش فوراً
     socket.on("post_updated", (updatedPostFromServer) => {
       queryClient.setQueryData(['posts'], (oldPosts = []) => 
         oldPosts.map(p => p._id === updatedPostFromServer._id ? updatedPostFromServer : p)
@@ -80,23 +78,20 @@ function Posts() {
     };
   }, [queryClient]);
 
-  // دالة تفريغ الفورمة
   const resetForm = () => {
     setEditId(null);
     setFile(null);
     setPreview(null);
-    setFormData({avatar: "", text: "", fileId: "" });
+    setFormData({ avatar: "", text: "", fileId: "" });
     setIsFormOpen(false);
   };
 
-  // دالة تعديل المنشور
   const handleEditClick = (post) => {
     setEditId(post._id);
-    setFormData({text: post.text, avatar: post.avatar, fileId: post.fileId });
+    setFormData({ text: post.text, avatar: post.avatar, fileId: post.fileId });
     setIsFormOpen(true);
   };
 
-  // دالة الحذف المنشور
   const handleDeleteClick = (post) => {
     askConfirm(
       "تأكيد الحذف", 
@@ -104,7 +99,6 @@ function Posts() {
       async () => {
         try {
           await API.delete(`/deletePost/${post._id}`);
-          // تحديث الكاش محلياً فوراً لحذف المنشور بصرياً بسرعة
           queryClient.setQueryData(['posts'], (old) => old.filter(p => p._id !== post._id));
           showToast("تم الحذف بنجاح", "success");
         } catch (err) {
@@ -114,7 +108,6 @@ function Posts() {
     );
   };
 
-  // دالة اضافة وتعديل المنشور
   const submitData = async () => {
     const { text } = formData;
     if (!text) return showToast("يرجى ملء جميع الحقول المطلوبة", "error");
@@ -152,7 +145,6 @@ function Posts() {
         showToast("تم النشر بنجاح", "success");
       }
       
-      // 🟢 أمر سحري: يخبر الكاش بأن يقوم بعمل تحديث صامت في الخلفية للبيانات
       queryClient.invalidateQueries(['posts']);
       resetForm();
     } catch (err) {
@@ -169,7 +161,6 @@ function Posts() {
   return (
     <div dir="rtl" className="min-h-screen bg-base-200 pb-2 font-sans w-full relative">
       
-      {/* الزر العائم للأدمن */}
       {user?.role === "admin" && (
         <button 
           onClick={() => setIsFormOpen(true)} 
@@ -180,12 +171,10 @@ function Posts() {
         </button>
       )}
 
-      {/* نافذة الفورم العائمة (Modal) */}
       {user?.role === "admin" && isFormOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-base-100 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-base-300 relative">
             <button onClick={resetForm} className="btn btn-sm btn-circle btn-ghost absolute left-4 top-4 z-10">✕</button>
-
             <PostForm 
               editId={editId}
               formData={formData}
@@ -202,7 +191,6 @@ function Posts() {
       )}
       
       <div className="max-w-4xl mx-auto px-0">
-        {/* خانة البحث */}
         <div className="px-2 py-2">
           <div className="relative">
             <FaSearch className="absolute right-3 top-3.5 text-base-content/40" />
@@ -210,7 +198,6 @@ function Posts() {
           </div>
         </div>
 
-        {/* 🟢 عرض المنشورات الذكي: الـ Loader يظهر لأول مرة في تاريخ فتح التطبيق فقط! */}
         {isLoading && posts.length === 0 ? (
           <Loader />
         ) : (
@@ -222,6 +209,10 @@ function Posts() {
                 user={user}
                 onEdit={handleEditClick}
                 onDelete={handleDeleteClick}
+                isAllMuted={isAllMuted}
+                setIsAllMuted={setIsAllMuted}
+                activePostId={activePostId}
+                setActivePostId={setActivePostId}
               />
             ))}
           </div>
