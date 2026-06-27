@@ -1,8 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useContext } from "react";
-import API from "../api/axiosInstance"; 
-import { useToast } from '../Component/ui/PopUp/ToastContext';
-import { AuthContext } from "../context/AuthContext";
+import API from "../../api/axiosInstance"; 
+import { useToast } from '../../Component/ui/PopUp/ToastContext';
+import { AuthContext } from "../../context/AuthContext";
 
 const Register = () => {
   const [username, setUsername] = useState("");

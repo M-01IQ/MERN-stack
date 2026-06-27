@@ -1,8 +1,8 @@
 import { useState, useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
-import { useToast } from "../Component/ui/PopUp/ToastContext";
+import { AuthContext } from "../../context/AuthContext";
+import { useToast } from "../../Component/ui/PopUp/ToastContext";
 import { Link } from "react-router-dom"; 
-import API from "../api/axiosInstance";
+import API from "../../api/axiosInstance";
 
 const Login = () => {
   const [username, setUsername] = useState("");

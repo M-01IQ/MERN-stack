@@ -4,16 +4,16 @@ import { AuthContext } from "./context/AuthContext";
 import { ToastProvider } from './Component/ui/PopUp/ToastContext';
 import { useCookies } from "react-cookie";
 
-import Navbar from './Component/common/Navbar';
-import Loader from './Component/common/Loader';
-import Register from "./Pages/Register";
-import Login from "./Pages/Login";
-import HomePage from "./Pages/HomePage";
-import Users from "./Pages/Users";
-import Reels from "./Pages/Reels";
-import Profile from "./Pages/Profile";
-import Notifications from "./Pages/Notifications";
-import Settings from "./Pages/Settings";
+import Navbar from './Component/common/Navbar/Navbar';
+import Loader from './Component/common/Loader/Loader';
+import Register from "./Pages/Register/Register";
+import Login from "./Pages/Login/Login";
+import HomePage from "./Pages/HomePage/HomePage";
+import Users from "./Pages/Users/Users";
+import Reels from "./Pages/Reels/Reels";
+import Profile from "./Pages/Profile/Profile";
+import Notifications from "./Pages/Notifications/Notifications";
+import Settings from "./Pages/Settings/Settings";
 
 function App() {
   const { user, loading } = useContext(AuthContext);
@@ -41,6 +41,7 @@ function App() {
         ) : (
           /* إذا كان المستخدم مسجلاً، نعرض الهيكل الكامل للموقع */
           <div className="min-h-screen bg-base-100 font-sans" dir="rtl">
+            {/* ===== الشريط السفلي ===== */}
             <Navbar /> 
             
             <main className={`container mx-auto p-0 ${isReelsPage ? '' : 'pb-15'}`}>

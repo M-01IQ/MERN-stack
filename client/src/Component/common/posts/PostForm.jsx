@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FaPlus, FaEdit, FaPhotoVideo } from 'react-icons/fa';
 import { Upload, X, Film, Image } from 'lucide-react';
-import Loader from '../../common/Loader';
+import Loader from '../../common/Loader/Loader';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(

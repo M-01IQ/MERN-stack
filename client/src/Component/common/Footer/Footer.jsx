@@ -1,4 +1,12 @@
 import React from 'react';
+import { FaInstagram, FaFacebook, FaTelegram, FaGithub } from "react-icons/fa";
+
+const socials = [
+  { name: "Instagram", icon: FaInstagram, color: "btn-error",   href: "#" },
+  { name: "Facebook",  icon: FaFacebook,  color: "btn-info",    href: "#" },
+  { name: "Telegram",  icon: FaTelegram,  color: "btn-info",    href: "#" },
+  { name: "GitHub",    icon: FaGithub,    color: "btn-neutral", href: "#" },
+];
 
 const Footer = () => {
   return (
@@ -19,6 +27,7 @@ const Footer = () => {
       </aside>
 
       {/* القسم الثاني: روابط الخدمات */}
+      
       <nav>
         <h6 className="footer-title opacity-100 text-primary">الخدمات</h6>
         <a className="link link-hover">تصميم المواقع</a>
@@ -26,25 +35,23 @@ const Footer = () => {
         <a className="link link-hover">التسويق الرقمي</a>
         <a className="link link-hover">الاستشارات الفنية</a>
       </nav>
-
-      {/* القسم الثالث: روابط الشركة */}
-      <nav>
-        <h6 className="footer-title opacity-100 text-primary">الشركة</h6>
-        <a className="link link-hover">من نحن</a>
-        <a className="link link-hover">تواصل معنا</a>
-        <a className="link link-hover">الوظائف</a>
-        <a className="link link-hover">الصحافة</a>
-      </nav>
-
-      {/* القسم الرابع: السياسات والخصوصية */}
-      <nav>
-        <h6 className="footer-title opacity-100 text-primary">قانوني</h6>
-        <a className="link link-hover">شروط الاستخدام</a>
-        <a className="link link-hover">سياسة الخصوصية</a>
-        <a className="link link-hover">سياسة الكوكيز</a>
-      </nav>
-
       {/* القسم السفلي: الحقوق ووسائل التواصل الاجتماعي */}
+      
+            {/* ===== تواصل معنا ===== */}
+      <section className="text-center bg-base-200">
+        <h2 className="text-2xl font-black mb-2 text-base-content">تواصل معنا</h2>
+        <p className="text-base-content/60 mb-10">تابعنا على منصات التواصل الاجتماعي</p>
+
+        <div className="flex flex-wrap justify-center gap-4">
+          {socials.map(({ name, icon: Icon, color, href }) => (
+            <a key={name} href={href} className={`btn ${color} btn-outline gap-2`}>
+              <Icon size={20} />
+              {name}
+            </a>
+          ))}
+        </div>
+      </section>
+      
       <div className="footer footer-center p-4 bg-base-300 text-base-content rounded mt-10">
         <aside>
           <p>© {new Date().getFullYear()} - جميع الحقوق محفوظة لشركة XYZ التقنية</p>

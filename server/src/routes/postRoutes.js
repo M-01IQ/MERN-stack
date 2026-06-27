@@ -30,6 +30,25 @@ router.get("/posts", verifyToken, async (req, res) => {
   }
 });
 
+// GET USER POSTS — جلب منشورات مستخدم معين
+router.get("/posts/user/:userId", verifyToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // البحث في قاعدة البيانات عن المنشورات التي تطابق الـ userId الممرر في الرابط
+    const userPosts = await PostModule.find({ userId: userId })
+      .populate("userId", "username avatar role")
+      .populate("comments.userId", "username avatar role")
+      .sort({ _id: -1 }); // ترتيب من الأحدث إلى الأقدم
+
+    res.send(userPosts);
+  } catch (error) {
+    console.error("Error fetching user posts:", error);
+    res.status(500).json({ message: "خطأ في جلب منشورات هذا المستخدم" });
+  }
+});
+
+
 // ADD POST — إضافة منشور جديد (يقبل صور أو فيديوهات)
 router.post("/newpost", verifyToken, async (req, res) => {
   try {

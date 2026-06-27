@@ -1,11 +1,11 @@
 import { useState, useEffect, useContext, useRef } from "react";
 import { useCookies } from "react-cookie";
-import NightBtn from "../Component/ui/Buttons/NightBtn";
-import NotificationsBtn from "../Component/ui/Buttons/NotificationsBtn";
-import PublicBtn from "../Component/ui/Buttons/PublicBtn";
-import { AuthContext } from "../context/AuthContext";
-import { useConfirm } from "../Component/ui/PopUp/ConfirmContext";
-import { useToast } from "../Component/ui/PopUp/ToastContext"; 
+import NightBtn from "../../Component/ui/Buttons/NightBtn";
+import NotificationsBtn from "../../Component/ui/Buttons/NotificationsBtn";
+import PublicBtn from "../../Component/ui/Buttons/PublicBtn";
+import { AuthContext } from "../../context/AuthContext";
+import { useConfirm } from "../../Component/ui/PopUp/ConfirmContext";
+import { useToast } from "../../Component/ui/PopUp/ToastContext"; 
 import { HiOutlineLogout } from "react-icons/hi";
 import { useQueryClient } from '@tanstack/react-query';
 

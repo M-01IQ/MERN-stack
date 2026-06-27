@@ -1,8 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
 import { useContext } from "react";
-import { AuthContext } from "../../context/AuthContext";
-import { useConfirm } from "../ui/PopUp/ConfirmContext";
-import { useToast } from "../ui/PopUp/ToastContext";
+import { AuthContext } from "../../../context/AuthContext";
+import { useConfirm } from "../../ui/PopUp/ConfirmContext";
+import { useToast } from "../../ui/PopUp/ToastContext";
 import { 
   HiHome, HiOutlineHome, 
   HiUsers, HiOutlineUsers, 
@@ -20,6 +20,12 @@ const Navbar = () => {
 
   const hideOnPages = ["/login", "/register", "/reels"]; 
   
+  const handleHome=()=>{
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'smooth'})
+  }
   if (hideOnPages.includes(location.pathname.toLowerCase()) || !user) return null;
 
   const isActive = (path) => location.pathname === path;
@@ -29,7 +35,7 @@ const Navbar = () => {
         
         {/* الرئيسية */}
         <Link to="/" className={`flex flex-col items-center flex-1 ${isActive("/") ? "text-primary" : "text-gray-400"}`}>
-          {isActive("/") ? <HiHome className="text-2xl" /> : <HiOutlineHome className="text-2xl" />}
+          {isActive("/") ? <HiHome onClick={handleHome} className="text-2xl" /> : <HiOutlineHome className="text-2xl" />}
           <span className="text-[10px] mt-1">الرئيسية</span>
         </Link>
 

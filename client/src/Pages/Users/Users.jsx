@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useToast } from '../Component/ui/PopUp/ToastContext';
-import Loader from '../Component/common/Loader';
-import API from "../api/axiosInstance"; 
+import { useToast } from '../../Component/ui/PopUp/ToastContext';
+import Loader from '../../Component/common/Loader/Loader';
+import API from "../../api/axiosInstance"; 
 import { FaUserPlus, FaEdit, FaTrash, FaSearch, FaUser, FaShieldAlt } from "react-icons/fa";
 
 // استيراد الـ Hooks الخاصة بإدارة الكاش من React Query

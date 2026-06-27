@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 import { AuthContext } from "../../../context/AuthContext";
 import { useToast } from '../../ui/PopUp/ToastContext';
 import { useConfirm } from "../../ui/PopUp/ConfirmContext";
-import Loader from "../../common/Loader";
+import Loader from "../../common/Loader/Loader";
 import API from '../../../api/axiosInstance'; 
 import { FaSearch, FaPlus } from 'react-icons/fa';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -95,7 +95,7 @@ function Posts() {
   const handleDeleteClick = (post) => {
     askConfirm(
       "تأكيد الحذف", 
-      `هل أنت متأكد من حذف المنشور "${post.text}"؟ لا يمكن التراجع عن هذا الإجراء.`, 
+      `هل أنت متأكد من حذف المنشور ؟ لا يمكن التراجع عن هذا الإجراء.`, 
       async () => {
         try {
           await API.delete(`/deletePost/${post._id}`);

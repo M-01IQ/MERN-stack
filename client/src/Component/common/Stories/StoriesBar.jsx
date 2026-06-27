@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import StoriesComponent from 'react-insta-stories';
 import { FaPlus, FaRegImage, FaTrash } from 'react-icons/fa';
-import API from '../../api/axiosInstance'; 
-import { AuthContext } from '../../context/AuthContext';
+import API from '../../../api/axiosInstance'; 
+import { AuthContext } from '../../../context/AuthContext';
 import { createClient } from '@supabase/supabase-js';
 
 const Stories = StoriesComponent.default || StoriesComponent;
