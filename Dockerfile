@@ -25,4 +25,4 @@ COPY server/ ./server/
 EXPOSE 3000
 
 # 8. أمر التشغيل الصريح للسيرفر
-CMD ["node", "server.js"]
+CMD ["node", "server/server.js"]
